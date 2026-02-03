@@ -1,0 +1,42 @@
+{
+    "app": {
+        "theme": "default",
+        "language": "zh_CN",
+        "auto_save": true,
+        "remember_last_folder": true,
+        "output_folder_suffix": "_processed"
+    },
+    "watermark": {
+        "text": "MU Group Leo: +86 13819858718",
+        "font_size": 40,
+        "opacity": 80,
+        "color": [
+            255,
+            255,
+            0
+        ],
+        "position": "中心",
+        "multi_size": true,
+        "high_contrast": true,
+        "font_chinese": "Microsoft YaHei",
+        "font_english": "Arial"
+    },
+    "gif": {
+        "delay": 1000,
+        "repeat": 0,
+        "quality": 5,
+        "width": 400,
+        "height": 400,
+        "keep_ratio": true
+    },
+    "pdf": {
+        "quality": 95,
+        "page_size": "A4",
+        "orientation": "portrait",
+        "margin": 10
+    },
+    "paths": {
+        "last_folder": "D:/文档/桌面/LEO Development Log/FABRIC 布/安总/Watermarked_Images",
+        "default_output_folder": ""
+    }
+}

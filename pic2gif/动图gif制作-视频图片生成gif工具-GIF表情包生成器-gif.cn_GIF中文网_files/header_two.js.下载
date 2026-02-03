@@ -1,0 +1,78 @@
+$(document).on("click", ".nowtovip", function() {
+    layer.open({
+        type: 2,
+        title: false,
+        closeBtn: 0,
+        area: ['913px', '492px'],
+        content: ['/pay/userpay?vip_id=4', 'no'],
+    });
+});
+$(document).on("click", ".membershipListBtn", function() {
+    $.ajax({
+        url: '/index/istype',
+        type: 'GET',
+        dataType: 'json',
+        async: false,
+        data: {
+            param1: 'value1'
+        },
+    }).done(function(res) {
+        type = res.type;
+    })
+    if (type == 0) {
+        layer.open({
+            skin: 'logmethods',
+            title: false,
+            type: 2,
+            closeBtn: 0,
+            shade: 0.7,
+            shadeClose: true,
+            content: ['/login', 'no'],
+            area:['750px','480px'],
+        })
+        return;
+    } else {
+        layer.open({
+            type: 2,
+            title: false,
+            closeBtn: 0,
+            area: ['913px', '492px'],
+            content: ['/pay/userpay?vip_id=4', 'no'],
+        });
+    }
+});
+// 升级会员弹出
+$(document).on("click", ".sjhyxxnew", function() {
+    $.ajax({
+        url: '/index/istype',
+        type: 'GET',
+        dataType: 'json',
+        async: false,
+        data: {
+            param1: 'value1'
+        },
+    }).done(function(res) {
+        type = res.type;
+    })
+    if (type == 0) {
+        layer.open({
+            skin: 'logmethods',
+            title: false,
+            type: 2,
+            closeBtn: 0,
+            shade: 0.7,
+            shadeClose: true,
+            content: ['/login', 'no'],
+            area:['750px','480px'],
+        })
+        return;
+    } else {
+        layer.open({
+            type: 2,
+            title: false,
+            closeBtn: 0,
+            area: ['913px', '492px'],
+            content: ['/pay/userpay?vip_id=4', 'no'],
+        });
+    }
+});

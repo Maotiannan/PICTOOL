@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片转GIF工具</title>
+    <!-- 使用内置GIF编码器，无需外部依赖 -->
+    <script>
+        console.log('🎬 使用内置GIF编码器，无需外部库依赖');
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            margin-bottom: 40px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            background: #f8f9ff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .controls-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .control-group {
+            background: #f8f9ff;
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #e0e6ff;
+        }
+
+        .control-group h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        .control-item {
+            margin-bottom: 20px;
+        }
+
+        .control-item label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .control-item input, .control-item select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e6ff;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .control-item input:focus, .control-item select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .preview-section {
+            margin-bottom: 40px;
+        }
+
+        .preview-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 15px;
+            border: 1px solid #e0e6ff;
+        }
+
+        .preview-item {
+            position: relative;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .preview-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+
+        .preview-item .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255,0,0,0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s ease;
+        }
+
+        .preview-item .remove-btn:hover {
+            background: rgba(255,0,0,1);
+        }
+
+        .preview-item .order-number {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8f9ff;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .progress-section {
+            margin-bottom: 40px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e6ff;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .result-section {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            background: #f8f9ff;
+            border-radius: 15px;
+            border: 1px solid #e0e6ff;
+        }
+
+        .result-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .result-gif {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .sortable-container {
+            cursor: move;
+        }
+
+        .sortable-container.dragging {
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .controls-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 图片转GIF工具</h1>
+            <p>上传多张图片，自定义参数，一键生成精美GIF动画 - 内置编码器版本</p>
+        </div>
+
+        <div class="main-content">
+            <!-- 上传区域 -->
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📸</div>
+                    <div class="upload-text">点击或拖拽上传图片</div>
+                    <div class="upload-hint">支持 JPG、PNG、WEBP 格式，可同时上传多张图片</div>
+                </div>
+                <input type="file" id="fileInput" multiple accept="image/*">
+            </div>
+
+            <!-- 控制面板 -->
+            <div class="controls-section">
+                <div class="control-group">
+                    <h3>🎛️ 动画参数</h3>
+                    <div class="control-item">
+                        <label for="delay">帧延迟 (毫秒)</label>
+                        <input type="number" id="delay" value="500" min="50" max="5000">
+                    </div>
+                    <div class="control-item">
+                        <label for="repeat">循环次数</label>
+                        <select id="repeat">
+                            <option value="0">无限循环</option>
+                            <option value="1">1次</option>
+                            <option value="2">2次</option>
+                            <option value="3">3次</option>
+                            <option value="5">5次</option>
+                        </select>
+                    </div>
+                    <div class="control-item">
+                        <label for="quality">图片质量</label>
+                        <select id="quality">
+                            <option value="1">最高质量</option>
+                            <option value="10" selected>高质量</option>
+                            <option value="20">中等质量</option>
+                            <option value="30">低质量</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>📐 尺寸设置</h3>
+                    <div class="control-item">
+                        <label for="width">宽度 (像素)</label>
+                        <input type="number" id="width" value="400" min="100" max="1000">
+                    </div>
+                    <div class="control-item">
+                        <label for="height">高度 (像素)</label>
+                        <input type="number" id="height" value="400" min="100" max="1000">
+                    </div>
+                    <div class="control-item">
+                        <label for="keepRatio">保持宽高比</label>
+                        <select id="keepRatio">
+                            <option value="true" selected>是</option>
+                            <option value="false">否</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 预览区域 -->
+            <div class="preview-section">
+                <h3>🖼️ 图片预览 (可拖拽调整顺序)</h3>
+                <div class="preview-container" id="previewContainer">
+                    <div style="grid-column: 1/-1; text-align: center; color: #999; padding: 40px;">
+                        还没有上传图片，请先上传一些图片
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="action-buttons">
+                <button class="btn btn-secondary" id="clearBtn">🗑️ 清空所有</button>
+                <button class="btn btn-primary" id="generateBtn" disabled>🎬 生成GIF</button>
+            </div>
+
+            <!-- 进度条 -->
+            <div class="progress-section" id="progressSection">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">准备中...</div>
+            </div>
+
+            <!-- 结果展示 -->
+            <div class="result-section" id="resultSection">
+                <h3>🎉 GIF生成完成！</h3>
+                <img id="resultGif" class="result-gif" alt="生成的GIF">
+                <div>
+                    <button class="btn btn-primary" id="downloadBtn">💾 下载GIF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ImageToGifConverter {
+            constructor() {
+                this.images = [];
+                this.initializeElements();
+                this.bindEvents();
+            }
+
+            initializeElements() {
+                this.uploadArea = document.getElementById('uploadArea');
+                this.fileInput = document.getElementById('fileInput');
+                this.previewContainer = document.getElementById('previewContainer');
+                this.generateBtn = document.getElementById('generateBtn');
+                this.clearBtn = document.getElementById('clearBtn');
+                this.progressSection = document.getElementById('progressSection');
+                this.progressFill = document.getElementById('progressFill');
+                this.progressText = document.getElementById('progressText');
+                this.resultSection = document.getElementById('resultSection');
+                this.resultGif = document.getElementById('resultGif');
+                this.downloadBtn = document.getElementById('downloadBtn');
+            }
+
+            bindEvents() {
+                // 上传区域事件
+                this.uploadArea.addEventListener('click', () => this.fileInput.click());
+                this.uploadArea.addEventListener('dragover', this.handleDragOver.bind(this));
+                this.uploadArea.addEventListener('dragleave', this.handleDragLeave.bind(this));
+                this.uploadArea.addEventListener('drop', this.handleDrop.bind(this));
+
+                // 文件输入事件
+                this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+
+                // 按钮事件
+                this.generateBtn.addEventListener('click', this.generateGif.bind(this));
+                this.clearBtn.addEventListener('click', this.clearAll.bind(this));
+                this.downloadBtn.addEventListener('click', this.downloadGif.bind(this));
+
+                // 尺寸比例联动
+                document.getElementById('width').addEventListener('input', this.handleSizeChange.bind(this));
+                document.getElementById('height').addEventListener('input', this.handleSizeChange.bind(this));
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+                this.uploadArea.classList.add('dragover');
+            }
+
+            handleDragLeave(e) {
+                e.preventDefault();
+                this.uploadArea.classList.remove('dragover');
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                this.uploadArea.classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files);
+                this.processFiles(files);
+            }
+
+            handleFileSelect(e) {
+                const files = Array.from(e.target.files);
+                this.processFiles(files);
+            }
+
+            processFiles(files) {
+                const imageFiles = files.filter(file => file.type.startsWith('image/'));
+                
+                imageFiles.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            this.images.push({
+                                file: file,
+                                dataUrl: e.target.result,
+                                image: img,
+                                id: Date.now() + Math.random()
+                            });
+                            this.updatePreview();
+                            this.updateGenerateButton();
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            updatePreview() {
+                if (this.images.length === 0) {
+                    this.previewContainer.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; color: #999; padding: 40px;">
+                            还没有上传图片，请先上传一些图片
+                        </div>
+                    `;
+                    return;
+                }
+
+                this.previewContainer.innerHTML = this.images.map((img, index) => `
+                    <div class="preview-item sortable-container" draggable="true" data-id="${img.id}">
+                        <img src="${img.dataUrl}" alt="预览图片">
+                        <button class="remove-btn" onclick="converter.removeImage('${img.id}')">×</button>
+                        <div class="order-number">${index + 1}</div>
+                    </div>
+                `).join('');
+
+                // 添加拖拽排序功能
+                this.initializeSortable();
+            }
+
+            initializeSortable() {
+                const items = this.previewContainer.querySelectorAll('.sortable-container');
+                
+                items.forEach(item => {
+                    item.addEventListener('dragstart', this.handleDragStart.bind(this));
+                    item.addEventListener('dragover', this.handleDragOverSort.bind(this));
+                    item.addEventListener('drop', this.handleDropSort.bind(this));
+                    item.addEventListener('dragend', this.handleDragEnd.bind(this));
+                });
+            }
+
+            handleDragStart(e) {
+                e.dataTransfer.setData('text/plain', e.target.dataset.id);
+                e.target.classList.add('dragging');
+            }
+
+            handleDragOverSort(e) {
+                e.preventDefault();
+            }
+
+            handleDropSort(e) {
+                e.preventDefault();
+                const draggedId = e.dataTransfer.getData('text/plain');
+                const targetId = e.target.closest('.sortable-container').dataset.id;
+                
+                if (draggedId !== targetId) {
+                    this.reorderImages(draggedId, targetId);
+                }
+            }
+
+            handleDragEnd(e) {
+                e.target.classList.remove('dragging');
+            }
+
+            reorderImages(draggedId, targetId) {
+                const draggedIndex = this.images.findIndex(img => img.id == draggedId);
+                const targetIndex = this.images.findIndex(img => img.id == targetId);
+                
+                if (draggedIndex !== -1 && targetIndex !== -1) {
+                    const draggedItem = this.images.splice(draggedIndex, 1)[0];
+                    this.images.splice(targetIndex, 0, draggedItem);
+                    this.updatePreview();
+                }
+            }
+
+            removeImage(id) {
+                this.images = this.images.filter(img => img.id != id);
+                this.updatePreview();
+                this.updateGenerateButton();
+            }
+
+            updateGenerateButton() {
+                this.generateBtn.disabled = this.images.length < 2;
+            }
+
+            handleSizeChange() {
+                const keepRatio = document.getElementById('keepRatio').value === 'true';
+                if (!keepRatio) return;
+
+                const width = parseInt(document.getElementById('width').value);
+                const height = parseInt(document.getElementById('height').value);
+                
+                // 这里可以添加比例保持逻辑
+                // 为了简化，暂时不实现自动调整
+            }
+
+            async generateGif() {
+                if (this.images.length < 2) {
+                    alert('请至少上传2张图片');
+                    return;
+                }
+
+                // 检查内置编码器是否可用
+                if (typeof SimpleGifEncoder === 'undefined') {
+                    alert('GIF编码器不可用，请刷新页面重试');
+                    return;
+                }
+
+                this.showProgress();
+                this.generateBtn.disabled = true;
+
+                try {
+                    const delay = parseInt(document.getElementById('delay').value);
+                    const repeat = parseInt(document.getElementById('repeat').value);
+                    const width = parseInt(document.getElementById('width').value);
+                    const height = parseInt(document.getElementById('height').value);
+                    const keepRatio = document.getElementById('keepRatio').value === 'true';
+
+                    // 创建GIF数据
+                    const gifData = await this.createGifData(width, height, delay, repeat, keepRatio);
+                    
+                    // 创建Blob
+                    const blob = new Blob([gifData], { type: 'image/gif' });
+                    
+                    this.showResult(blob);
+                    this.hideProgress();
+                    this.generateBtn.disabled = false;
+
+                } catch (error) {
+                    console.error('生成GIF时出错:', error);
+                    alert('生成GIF时出错，请重试');
+                    this.hideProgress();
+                    this.generateBtn.disabled = false;
+                }
+            }
+
+            async createGifData(width, height, delay, repeat, keepRatio) {
+                console.log('开始创建GIF数据，参数:', { width, height, delay, repeat, keepRatio });
+                
+                // 直接使用内置编码器，更可靠
+                const gifEncoder = new SimpleGifEncoder();
+                gifEncoder.setSize(width, height);
+                gifEncoder.setDelay(delay);
+                gifEncoder.setRepeat(repeat);
+                gifEncoder.setQuality(parseInt(document.getElementById('quality').value));
+
+                // 处理每张图片
+                for (let i = 0; i < this.images.length; i++) {
+                    console.log(`处理第 ${i + 1} 张图片`);
+                    
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const img = this.images[i].image;
+                    console.log(`原始图片尺寸: ${img.width}x${img.height}`);
+                    
+                    // 清空画布为白色背景
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, width, height);
+                    
+                    if (keepRatio) {
+                        // 保持宽高比
+                        const scale = Math.min(width / img.width, height / img.height);
+                        const newWidth = img.width * scale;
+                        const newHeight = img.height * scale;
+                        const x = (width - newWidth) / 2;
+                        const y = (height - newHeight) / 2;
+                        
+                        console.log(`缩放后尺寸: ${newWidth}x${newHeight}, 位置: (${x}, ${y})`);
+                        ctx.drawImage(img, x, y, newWidth, newHeight);
+                    } else {
+                        ctx.drawImage(img, 0, 0, width, height);
+                    }
+
+                    // 确保图像正确绘制
+                    const imageData = ctx.getImageData(0, 0, width, height);
+                    console.log(`图像数据长度: ${imageData.data.length}`);
+                    
+                    // 检查图像数据是否有效
+                    let hasValidData = false;
+                    for (let j = 0; j < imageData.data.length; j += 4) {
+                        if (imageData.data[j] !== 255 || imageData.data[j + 1] !== 255 || imageData.data[j + 2] !== 255) {
+                            hasValidData = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!hasValidData) {
+                        console.warn(`警告：第 ${i + 1} 张图片似乎是空白的`);
+                    }
+                    
+                    // 使用内置编码器
+                    gifEncoder.addFrame(canvas);
+                    
+                    this.updateProgress((i + 1) / this.images.length * 100, `处理图片 ${i + 1}/${this.images.length}`);
+                    
+                    // 给UI更新时间
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+
+                console.log('所有图片处理完成，开始编码GIF');
+                
+                // 返回GIF数据
+                return gifEncoder.encode();
+            }
+
+
+
+            showProgress() {
+                this.progressSection.style.display = 'block';
+                this.resultSection.style.display = 'none';
+            }
+
+            hideProgress() {
+                this.progressSection.style.display = 'none';
+            }
+
+            updateProgress(percentage, text) {
+                this.progressFill.style.width = percentage + '%';
+                this.progressText.textContent = text;
+            }
+
+            showResult(blob) {
+                const url = URL.createObjectURL(blob);
+                this.resultGif.src = url;
+                this.resultSection.style.display = 'block';
+                this.gifBlob = blob;
+                
+                // 滚动到结果区域
+                this.resultSection.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            downloadGif() {
+                if (!this.gifBlob) return;
+
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(this.gifBlob);
+                link.download = `animated-gif-${Date.now()}.gif`;
+                link.click();
+            }
+
+            clearAll() {
+                if (this.images.length > 0 && !confirm('确定要清空所有图片吗？')) {
+                    return;
+                }
+                
+                this.images = [];
+                this.updatePreview();
+                this.updateGenerateButton();
+                this.hideProgress();
+                this.resultSection.style.display = 'none';
+                this.fileInput.value = '';
+            }
+        }
+
+        // 改进的GIF编码器，修复雪花和乱码问题
+        class SimpleGifEncoder {
+            constructor() {
+                this.width = 0;
+                this.height = 0;
+                this.delay = 500;
+                this.repeat = 0;
+                this.quality = 20;
+                this.frames = [];
+                this.globalPalette = null;
+            }
+
+            setSize(width, height) {
+                this.width = width;
+                this.height = height;
+            }
+
+            setDelay(delay) {
+                this.delay = delay;
+            }
+
+            setRepeat(repeat) {
+                this.repeat = repeat;
+            }
+
+            setQuality(quality) {
+                this.quality = quality;
+            }
+
+            addFrame(canvas) {
+                const ctx = canvas.getContext('2d');
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                
+                // 存储原始图像数据
+                this.frames.push({
+                    imageData: imageData.data,
+                    width: canvas.width,
+                    height: canvas.height
+                });
+            }
+
+            // 改进的颜色量化算法
+            quantizeColors(pixelData, maxColors = 256) {
+                const colorMap = new Map();
+                
+                // 收集所有颜色并统计频率
+                for (let i = 0; i < pixelData.length; i += 4) {
+                    const r = pixelData[i];
+                    const g = pixelData[i + 1];
+                    const b = pixelData[i + 2];
+                    const a = pixelData[i + 3];
+                    
+                    // 跳过透明像素
+                    if (a < 128) continue;
+                    
+                    const key = (r << 16) | (g << 8) | b;
+                    
+                    if (!colorMap.has(key)) {
+                        colorMap.set(key, {
+                            r, g, b,
+                            count: 1
+                        });
+                    } else {
+                        colorMap.get(key).count++;
+                    }
+                }
+                
+                // 获取最常用的颜色
+                let colors = Array.from(colorMap.values());
+                colors.sort((a, b) => b.count - a.count);
+                
+                // 如果颜色太多，使用中位切分法减少颜色
+                if (colors.length > maxColors) {
+                    colors = this.medianCut(colors, maxColors);
+                }
+                
+                return colors;
+            }
+
+            // 中位切分法减少颜色
+            medianCut(colors, maxColors) {
+                if (colors.length <= maxColors) return colors;
+                
+                const buckets = [colors];
+                
+                while (buckets.length < maxColors) {
+                    // 找到最大的桶
+                    let maxBucket = buckets[0];
+                    let maxIndex = 0;
+                    
+                    for (let i = 1; i < buckets.length; i++) {
+                        if (buckets[i].length > maxBucket.length) {
+                            maxBucket = buckets[i];
+                            maxIndex = i;
+                        }
+                    }
+                    
+                    if (maxBucket.length <= 1) break;
+                    
+                    // 找到最大的颜色范围
+                    const ranges = {
+                        r: { min: 255, max: 0 },
+                        g: { min: 255, max: 0 },
+                        b: { min: 255, max: 0 }
+                    };
+                    
+                    for (const color of maxBucket) {
+                        ranges.r.min = Math.min(ranges.r.min, color.r);
+                        ranges.r.max = Math.max(ranges.r.max, color.r);
+                        ranges.g.min = Math.min(ranges.g.min, color.g);
+                        ranges.g.max = Math.max(ranges.g.max, color.g);
+                        ranges.b.min = Math.min(ranges.b.min, color.b);
+                        ranges.b.max = Math.max(ranges.b.max, color.b);
+                    }
+                    
+                    const rRange = ranges.r.max - ranges.r.min;
+                    const gRange = ranges.g.max - ranges.g.min;
+                    const bRange = ranges.b.max - ranges.b.min;
+                    
+                    let sortKey = 'r';
+                    if (gRange >= rRange && gRange >= bRange) sortKey = 'g';
+                    else if (bRange >= rRange && bRange >= gRange) sortKey = 'b';
+                    
+                    // 按选定的颜色分量排序
+                    maxBucket.sort((a, b) => a[sortKey] - b[sortKey]);
+                    
+                    // 在中位数处分割
+                    const mid = Math.floor(maxBucket.length / 2);
+                    const bucket1 = maxBucket.slice(0, mid);
+                    const bucket2 = maxBucket.slice(mid);
+                    
+                    // 替换原桶
+                    buckets[maxIndex] = bucket1;
+                    buckets.push(bucket2);
+                }
+                
+                // 从每个桶中选择代表色
+                const result = [];
+                for (const bucket of buckets) {
+                    if (bucket.length === 0) continue;
+                    
+                    // 计算加权平均颜色
+                    let totalR = 0, totalG = 0, totalB = 0, totalCount = 0;
+                    
+                    for (const color of bucket) {
+                        totalR += color.r * color.count;
+                        totalG += color.g * color.count;
+                        totalB += color.b * color.count;
+                        totalCount += color.count;
+                    }
+                    
+                    result.push({
+                        r: Math.round(totalR / totalCount),
+                        g: Math.round(totalG / totalCount),
+                        b: Math.round(totalB / totalCount),
+                        count: totalCount
+                    });
+                }
+                
+                return result;
+            }
+
+            // 改进的全局调色板创建
+            createGlobalPalette() {
+                const allPixels = [];
+                
+                // 收集所有帧的像素数据
+                for (const frame of this.frames) {
+                    for (let i = 0; i < frame.imageData.length; i += 4) {
+                        allPixels.push(frame.imageData[i]);     // R
+                        allPixels.push(frame.imageData[i + 1]); // G
+                        allPixels.push(frame.imageData[i + 2]); // B
+                        allPixels.push(frame.imageData[i + 3]); // A
+                    }
+                }
+                
+                // 量化颜色
+                const colors = this.quantizeColors(allPixels, 256);
+                
+                // 创建调色板
+                this.globalPalette = new Array(colors.length * 3);
+                for (let i = 0; i < colors.length; i++) {
+                    this.globalPalette[i * 3] = colors[i].r;
+                    this.globalPalette[i * 3 + 1] = colors[i].g;
+                    this.globalPalette[i * 3 + 2] = colors[i].b;
+                }
+                
+                return colors;
+            }
+
+            // 改进的颜色匹配算法
+            findClosestColor(r, g, b, colors) {
+                let bestIndex = 0;
+                let bestDistance = Infinity;
+                
+                for (let i = 0; i < colors.length; i++) {
+                    const color = colors[i];
+                    // 使用欧几里得距离
+                    const distance = Math.sqrt(
+                        Math.pow(r - color.r, 2) +
+                        Math.pow(g - color.g, 2) +
+                        Math.pow(b - color.b, 2)
+                    );
+                    
+                    if (distance < bestDistance) {
+                        bestDistance = distance;
+                        bestIndex = i;
+                    }
+                }
+                
+                return bestIndex;
+            }
+
+            quantizeFrameWithGlobalPalette(pixelData, globalColors) {
+                const indices = new Uint8Array(pixelData.length / 4);
+                
+                for (let i = 0; i < pixelData.length; i += 4) {
+                    const r = pixelData[i];
+                    const g = pixelData[i + 1];
+                    const b = pixelData[i + 2];
+                    const a = pixelData[i + 3];
+                    
+                    // 处理透明度
+                    if (a < 128) {
+                        indices[i / 4] = 0; // 使用第一个颜色作为透明色
+                    } else {
+                        indices[i / 4] = this.findClosestColor(r, g, b, globalColors);
+                    }
+                }
+                
+                return indices;
+            }
+
+            // 简化的LZW压缩
+            compressLZW(data, minCodeSize) {
+                const clearCode = 1 << minCodeSize;
+                const endCode = clearCode + 1;
+                let nextCode = endCode + 1;
+                let codeSize = minCodeSize + 1;
+                
+                const output = [];
+                let bitBuffer = 0;
+                let bitCount = 0;
+                
+                const writeBits = (value, bits) => {
+                    bitBuffer |= (value << bitCount);
+                    bitCount += bits;
+                    
+                    while (bitCount >= 8) {
+                        output.push(bitBuffer & 0xFF);
+                        bitBuffer >>= 8;
+                        bitCount -= 8;
+                    }
+                };
+                
+                // 写入清除码
+                writeBits(clearCode, codeSize);
+                
+                // 简化的压缩：直接输出每个像素值
+                for (let i = 0; i < data.length; i++) {
+                    writeBits(data[i], codeSize);
+                    
+                    // 定期重置以避免代码表过大
+                    if (i % 1000 === 0 && i > 0) {
+                        writeBits(clearCode, codeSize);
+                        nextCode = endCode + 1;
+                        codeSize = minCodeSize + 1;
+                    }
+                }
+                
+                // 写入结束码
+                writeBits(endCode, codeSize);
+                
+                // 清空缓冲区
+                if (bitCount > 0) {
+                    output.push(bitBuffer & 0xFF);
+                }
+                
+                return new Uint8Array(output);
+            }
+
+            encode() {
+                if (this.frames.length === 0) {
+                    throw new Error('没有帧数据');
+                }
+                
+                console.log('开始编码GIF，帧数:', this.frames.length);
+                
+                // 创建全局调色板
+                const globalColors = this.createGlobalPalette();
+                console.log('创建全局调色板，颜色数:', globalColors.length);
+                
+                // 量化所有帧
+                const quantizedFrames = [];
+                for (const frame of this.frames) {
+                    const indices = this.quantizeFrameWithGlobalPalette(frame.imageData, globalColors);
+                    quantizedFrames.push({
+                        data: indices,
+                        width: frame.width,
+                        height: frame.height
+                    });
+                }
+                
+                // 计算颜色表大小（必须是2的幂）
+                let colorTableSize = 1;
+                while ((1 << colorTableSize) < globalColors.length) {
+                    colorTableSize++;
+                }
+                colorTableSize = Math.max(2, colorTableSize);
+                const actualColorTableSize = 1 << colorTableSize;
+                
+                console.log('颜色表大小:', colorTableSize, '实际大小:', actualColorTableSize);
+                
+                const dataChunks = [];
+                
+                // GIF 头部
+                dataChunks.push(new TextEncoder().encode('GIF89a'));
+                
+                // 逻辑屏幕描述符
+                const lsd = new ArrayBuffer(7);
+                const lsdView = new DataView(lsd);
+                lsdView.setUint16(0, this.width, true);
+                lsdView.setUint16(2, this.height, true);
+                lsdView.setUint8(4, 0xF0 | (colorTableSize - 1)); // 全局颜色表标志
+                lsdView.setUint8(5, 0); // 背景色索引
+                lsdView.setUint8(6, 0); // 像素宽高比
+                dataChunks.push(new Uint8Array(lsd));
+                
+                // 全局颜色表
+                const globalColorTable = new Uint8Array(3 * actualColorTableSize);
+                for (let i = 0; i < this.globalPalette.length && i < globalColorTable.length; i++) {
+                    globalColorTable[i] = this.globalPalette[i];
+                }
+                dataChunks.push(globalColorTable);
+                
+                // 应用程序扩展 (循环控制)
+                if (this.repeat !== 1) {
+                    dataChunks.push(new Uint8Array([0x21, 0xFF, 0x0B]));
+                    dataChunks.push(new TextEncoder().encode('NETSCAPE2.0'));
+                    dataChunks.push(new Uint8Array([0x03, 0x01]));
+                    
+                    const repeatBytes = new ArrayBuffer(2);
+                    const repeatView = new DataView(repeatBytes);
+                    repeatView.setUint16(0, this.repeat, true);
+                    dataChunks.push(new Uint8Array(repeatBytes));
+                    dataChunks.push(new Uint8Array([0x00]));
+                }
+                
+                // 处理每一帧
+                for (let frameIndex = 0; frameIndex < quantizedFrames.length; frameIndex++) {
+                    const currentFrame = quantizedFrames[frameIndex];
+                    
+                    // 图形控制扩展
+                    dataChunks.push(new Uint8Array([0x21, 0xF9, 0x04, 0x00]));
+                    
+                    const delayBytes = new ArrayBuffer(2);
+                    const delayView = new DataView(delayBytes);
+                    delayView.setUint16(0, Math.round(this.delay / 10), true);
+                    dataChunks.push(new Uint8Array(delayBytes));
+                    dataChunks.push(new Uint8Array([0x00, 0x00]));
+                    
+                    // 图像描述符
+                    const imageDesc = new ArrayBuffer(10);
+                    const imageDescView = new DataView(imageDesc);
+                    imageDescView.setUint8(0, 0x2C); // 图像分隔符
+                    imageDescView.setUint16(1, 0, true); // 左边距
+                    imageDescView.setUint16(3, 0, true); // 上边距
+                    imageDescView.setUint16(5, this.width, true); // 图像宽度
+                    imageDescView.setUint16(7, this.height, true); // 图像高度
+                    imageDescView.setUint8(9, 0x00); // 局部颜色表标志
+                    dataChunks.push(new Uint8Array(imageDesc));
+                    
+                    // LZW 压缩图像数据
+                    const lzwData = this.compressLZW(currentFrame.data, colorTableSize);
+                    
+                    // 写入 LZW 最小代码大小
+                    dataChunks.push(new Uint8Array([colorTableSize]));
+                    
+                    // 写入数据子块
+                    for (let i = 0; i < lzwData.length; i += 255) {
+                        const chunkSize = Math.min(255, lzwData.length - i);
+                        dataChunks.push(new Uint8Array([chunkSize]));
+                        dataChunks.push(lzwData.slice(i, i + chunkSize));
+                    }
+                    
+                    // 数据子块终止符
+                    dataChunks.push(new Uint8Array([0x00]));
+                }
+                
+                // GIF 终止符
+                dataChunks.push(new Uint8Array([0x3B]));
+                
+                // 合并所有数据块
+                let totalLength = 0;
+                for (const chunk of dataChunks) {
+                    totalLength += chunk.length;
+                }
+                
+                const result = new Uint8Array(totalLength);
+                let offset = 0;
+                
+                for (const chunk of dataChunks) {
+                    result.set(chunk, offset);
+                    offset += chunk.length;
+                }
+                
+                console.log('GIF编码完成，总大小:', result.length, '字节');
+                return result;
+            }
+        }
+
+        // 初始化应用
+        const converter = new ImageToGifConverter();
+    </script>
+</body>
+</html> 

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片生成PDF工具</title>
+    <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>图片生成PDF工具</h1>
+        
+        <div class="input-group">
+            <label for="pdf-name">输入PDF文件名:</label>
+            <input type="text" id="pdf-name" placeholder="请输入PDF文件名">
+        </div>
+        
+        <div class="file-upload">
+            <div class="upload-area" id="drop-area">
+                <p>将图片拖放到此处或</p>
+                <input type="file" id="file-input" accept="image/jpeg,image/png,image/jpg" multiple>
+                <button class="upload-btn" id="select-file-btn">选择图片</button>
+            </div>
+        </div>
+        
+        <div class="preview-container">
+            <div class="preview-controls">
+                <button id="move-up" title="上移" disabled>↑</button>
+                <button id="move-down" title="下移" disabled>↓</button>
+                <button id="remove-item" title="删除" disabled>×</button>
+                <button id="clear-all" title="清空全部">清空</button>
+            </div>
+            <div class="preview-list-container">
+                <ul id="preview-list" class="preview-list"></ul>
+            </div>
+            <div class="image-preview">
+                <img id="selected-image-preview" src="" alt="预览">
+            </div>
+        </div>
+        
+        <button id="generate-pdf" class="generate-btn" disabled>生成PDF</button>
+    </div>
+
+    <!-- 引入PDF生成库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html> 

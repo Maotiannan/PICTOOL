@@ -1,0 +1,448 @@
+var shuobject = function() {
+	function y(a) {
+		return (a = String(a).replace(/^\s+|\s+$/g, "").match(
+			/^([^:\/?#]+:)?(\/\/(?:[^:@]*(?::[^:@]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/)) ? {
+			href: a[0] || "",
+			protocol: a[1] || "",
+			authority: a[2] || "",
+			host: a[3] || "",
+			hostname: a[4] || "",
+			port: a[5] || "",
+			pathname: a[6] || "",
+			search: a[7] || "",
+			hash: a[8] || ""
+		} : null
+	}
+
+	function F(a, b) {
+		function c(a) {
+			var b = [];
+			a.replace(/^(\.\.?(\/|$))+/, "").replace(/\/(\.(\/|$))+/g, "/").replace(/\/\.\.$/, "/../").replace(/\/?[^\/]*/g,
+				function(a) {
+					"/.." ===
+					a ? b.pop() : b.push(a)
+				});
+			return b.join("").replace(/^\//, "/" === a.charAt(0) ? "/" : "")
+		}
+		if (0 <= b.indexOf("blob:")) return b;
+		b = y(b || "");
+		a = y(a || "");
+		return b && a ? (b.protocol || a.protocol) + (b.protocol || b.authority ? b.authority : a.authority) + c(b.protocol ||
+			b.authority || "/" === b.pathname.charAt(0) ? b.pathname : b.pathname ? (a.authority && !a.pathname ? "/" : "") +
+			a.pathname.slice(0, a.pathname.lastIndexOf("/") + 1) + b.pathname : a.pathname) + (b.protocol || b.authority || b.pathname ?
+			b.search : b.search || a.search) + b.hash : null
+	}
+
+	function r(a, b) {
+		var c =
+			F(a, b);
+		return c ? c : (new URL(b, a)).href
+	}
+
+	function m(a) {
+		"loading" !== document.readyState ? a() : document.addEventListener("DOMContentLoaded", function c(d) {
+			document.removeEventListener("DOMContentLoaded", c);
+			a()
+		})
+	}
+
+	function z() {
+		var a = document.getElementsByTagName("base")[0];
+		return a ? a.href : document.location.href
+	}
+
+	function A(a) {
+		if (!a) return {};
+		"?" == a.charAt(0) && (a = a.slice(1));
+		a = a.split("&");
+		for (var b = {}, c = 0; c < a.length; c++) {
+			var d = a[c].split("="),
+				k = d[1];
+			b[decodeURIComponent(d[0])] = decodeURIComponent(k)
+		}
+		return b
+	}
+
+	function G(a, b, c, d, k, g) {
+		a = [70, 87, 83, a];
+		var h = [],
+			l, e;
+		l = 491520;
+		for (e = 20; 8 < e;) h.push(l >> (e -= 8) & 255);
+		l = l << 15 | 20 * b;
+		for (e += 15; 8 < e;) h.push(l >> (e -= 8) & 255);
+		l <<= 15;
+		for (e += 15; 8 < e;) h.push(l >> (e -= 8) & 255);
+		l = l << 15 | 20 * c;
+		for (e += 15; 8 < e;) h.push(l >> (e -= 8) & 255);
+		0 < e && h.push(l << 8 - e & 255);
+		h.push(255 * (d - (d | 0)) | 0, d | 0);
+		h.push(1, 0);
+		h.push(68, 17, k ? 8 : 0, 0, 0, 0);
+		void 0 !== g && h.push(67, 2, g >> 16 & 255, g >> 8 & 255, g & 255);
+		h.push(64, 0);
+		h.push(0, 0);
+		b = h.length + 8;
+		return new Blob([new Uint8Array(a.concat([b & 255, b >> 8 & 255, b >> 16 & 255, b >> 24 & 255], h))], {
+			type: "application/x-shockwave-flash"
+		})
+	}
+
+	function H(a, b, c) {
+		function d(a) {
+			a.type = "shumwayFileLoadingResponse";
+			a.sessionId = k;
+			b.postMessage(a, c)
+		}
+		var k = a.sessionId,
+			g = new XMLHttpRequest;
+		g.open(a.method || "GET", a.url, !0);
+		g.responseType = "arraybuffer";
+		g.onload = function() {
+			if (200 !== g.status) d({
+				topic: "error",
+				error: "XHR status: " + g.status
+			});
+			else {
+				var a = new Uint8Array(g.response);
+				d({
+					topic: "progress",
+					array: a,
+					loaded: a.length,
+					total: a.length
+				});
+				d({
+					topic: "close"
+				})
+			}
+		};
+		g.onerror = function() {
+			d({
+				topic: "error",
+				error: "XHR error"
+			})
+		};
+		g.send(a.postData || null);
+		d({
+			topic: "open"
+		})
+	}
+
+	function I(a) {
+		n || (window.addEventListener("message", function(a) {
+			var c = a.data;
+			"object" === typeof c && null !== c && "shumwayFileLoading" === c.type && n[a.origin] && H(c, a.source, a.origin)
+		}), n = Object.create(null));
+		n[a] = !0
+	}
+
+	function J(a, b) {
+		switch (b.action) {
+			case "init":
+				var c = this;
+				a.__flash__registerCallback = function(a) {
+					console.log("__flash__registerCallback: " + a);
+					this[a] = function() {
+						var b = Array.prototype.slice.call(arguments, 0);
+						console.log("__flash__callIn: " + a);
+						b = c.onExternalCallback(a,
+							b);
+						return window.eval(b)
+					}
+				};
+				a.__flash__unregisterCallback = function(a) {
+					console.log("__flash__unregisterCallback: " + a);
+					delete this[a]
+				};
+				if (window.__flash__toXML) break;
+				window.__flash__toXML = function k(a) {
+					switch (typeof a) {
+						case "boolean":
+							return a ? "<true/>" : "<false/>";
+						case "number":
+							return "<number>" + a + "</number>";
+						case "object":
+							if (null === a) return "<null/>";
+							if ("hasOwnProperty" in a && a.hasOwnProperty("length")) {
+								for (var b = "<array>", c = 0; c < a.length; c++) b += '<property id="' + c + '">' + k(a[c]) + "</property>";
+								return b + "</array>"
+							}
+							b =
+								"<object>";
+							for (c in a) b += '<property id="' + c + '">' + k(a[c]) + "</property>";
+							return b + "</object>";
+						case "string":
+							return "<string>" + a.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</string>";
+						case "undefined":
+							return "<undefined/>"
+					}
+				};
+				window.__flash__eval = function(a) {
+					console.log("__flash__eval: " + a);
+					return window.eval(a)
+				};
+				window.__flash__call = function(a) {
+					console.log("__flash__call (ignored): " + a)
+				};
+				break;
+			case "getId":
+				b.result = a.id;
+				break;
+			case "eval":
+				b.result = window.__flash__eval(b.expression);
+				break;
+			case "call":
+				b.result = window.__flash__call(b.request);
+				break;
+			case "register":
+				a.__flash__registerCallback(b.functionName);
+				break;
+			case "unregister":
+				a.__flash__unregisterCallback(b.functionName)
+		}
+	}
+
+	function B(a, b, c, d, k, g, h) {
+		var l;
+		h && (a = a || h.data, b = h.id || b, c = c || h.width, d = d || h.height, l = h.style);
+		var e = r(v, "/lib/flash/iframe/viewer.html");
+		a = r(z(), a);
+		var f = document.createElement("iframe");
+		c && (f.width = c);
+		d && (f.height = d);
+		f.setAttribute("id", b);
+		h && Object.keys(h).forEach(function(a) {
+			switch (a.toLowerCase()) {
+				case "styleclass":
+					f.setAttribute("class",
+						h[a]);
+					break;
+				case "class":
+				case "name":
+				case "align":
+					f.setAttribute(a, h[a])
+			}
+		});
+		var p = {};
+		g && Object.keys(g).forEach(function(a) {
+			a = a.toLowerCase();
+			"flashvars" === a && (k || (k = A(g[a])));
+			p[a] = g[a]
+		});
+		var t = {};
+		if (k) {
+			var m = [];
+			Object.keys(k).forEach(function(a) {
+				t[a] = k[a];
+				m.push(encodeURIComponent(a) + "=" + encodeURIComponent(k[a]))
+			});
+			0 < m.length && (p.flashvars = m.join("&"))
+		}
+		var n = {
+			baseUrl: z(),
+			url: a,
+			movieParams: t,
+			objectParams: p,
+			isRemote: q
+		};
+		q && I("http://127.0.0.1");
+		f.src = e;
+		f.setAttribute("frameborder", "0");
+		l && f.setAttribute("style",
+			l);
+		f.addEventListener("load", function w(a) {
+			f.removeEventListener("load", w);
+			f.contentWindow.postMessage({
+				type: "pluginParams",
+				flashParams: n
+			}, "*")
+		});
+		return f
+	}
+
+	function C(a, b, c, d, k, g, h, l, e) {
+		var f = B(b, c, d, k, g, h, l);
+		f.addEventListener("load", function t(a) {
+			f.removeEventListener("load", t);
+			if (q) e && e({
+				success: !0,
+				id: f.id,
+				ref: f
+			});
+			else {
+				var b = f.contentDocument;
+				b.addEventListener("shumwaystarted", function w(a) {
+					b.removeEventListener("shumwaystarted", w, !0);
+					a = f.contentWindow.easelHost;
+					var c = f.contentWindow.playerWindowIframe.contentWindow,
+						d = c.iframeExternalInterface;
+					d.processExternalCommand = J.bind(d, f);
+					f.shumway = {
+						stage: c.player.stage,
+						Shumway: c.Shumway,
+						flash: c.Shumway.AVM2.AS.flash,
+						easelHost: a
+					};
+					e && e({
+						success: !0,
+						id: f.id,
+						ref: f
+					})
+				}, !0)
+			}
+		});
+		a.parentNode.replaceChild(f, a)
+	}
+
+	function D(a, b, c) {
+		for (var d = a.getAttribute("width"), k = a.getAttribute("height"), g = a.getAttribute("data"), h = {
+					id: a.getAttribute("id"),
+					name: a.getAttribute("name"),
+					"class": a.getAttribute("class"),
+					align: a.getAttribute("align"),
+					style: a.getAttribute("style")
+				}, l = a.getElementsByTagName("param"),
+				e = {}, f = 0; f < l.length; f++) {
+			var p = l[f].getAttribute("name"),
+				m = l[f].getAttribute("value");
+			p && (e[p.toLowerCase()] = m)
+		}
+		g || (g = e.src || e.movie);
+		C(a, g, b, d, k, void 0, e, h, c)
+	}
+
+	function E() {
+		var a = u.call(document, "x-shu-object"),
+			b = new MutationObserver(function(c) {
+				c.forEach(function(c) {
+					if ((c = c.addedNodes) && 0 !== c.length)
+						for (var k = 0; k < c.length; k++)
+							if (c[k] === a) {
+								D(a);
+								b.disconnect();
+								break
+							}
+				})
+			});
+		b.observe(document, {
+			childList: !0,
+			subtree: !0
+		});
+		return a
+	}
+	var K = (document.body || document.getElementsByTagName("head")[0]).lastChild,
+		v = r(K.src, "."),
+		q = !1,
+		u = document.createElement,
+		x, n = null;
+	return {
+		get shumwayHome() {
+			return v
+		},
+		set shumwayHome(a) {
+			v = r(document.location.href, a)
+		},
+		get shumwayRemote() {
+			return q
+		},
+		set shumwayRemote(a) {
+			q = !!a
+		},
+		registerObject: function(a, b, c, d) {
+			m(function() {
+				var b = document.getElementById(a);
+				if (!b) throw Error("element " + a + " was not found");
+				D(b, a, d)
+			})
+		},
+		embedSWF: function(a, b, c, d, k, g, h, l, e, f) {
+			m(function() {
+				var g = document.getElementById(b);
+				if (!g) throw Error("element " + b + " was not found");
+				C(g, a, b, c, d, h, l, e, f)
+			})
+		},
+		getObjectById: function(a) {
+			return document.getElementById(a)
+		},
+		getFlashPlayerVersion: function() {
+			return {
+				major: 10,
+				minor: 0,
+				release: 0
+			}
+		},
+		hasFlashPlayerVersion: function(a) {
+			return !0
+		},
+		addLoadEvent: function(a) {
+			m(a)
+		},
+		addDomLoadEvent: function(a) {
+			m(a)
+		},
+		createSWF: function(a, b, c) {
+			var d = document.getElementById(c);
+			if (!d) throw Error("element " + c + " was not found");
+			a = B(void 0, c, void 0, void 0, void 0, b, a);
+			d.parentNode.replaceChild(a, d);
+			return a
+		},
+		removeSWF: function(a) {
+			a = document.getElementById(a);
+			a.parentNode.removeChild(a)
+		},
+		buildEmptySWF: function(a, b, c, d, k, g) {
+			return URL.createObjectURL(G(a,
+				b, c, d, k, g))
+		},
+		createElement: function(a) {
+			return "string" !== typeof a || "object" !== a.toLowerCase() ? u.apply(document, arguments) : E()
+		},
+		getShumwayObject: function(a) {
+			var b = "string" === typeof a ? document.getElementById(a) : a;
+			if (!b) throw Error("element " + a + " was not found");
+			return b.shumway
+		},
+		getQueryParamValue: function(a) {
+			x || (x = A(document.location.search));
+			return x[a]
+		},
+		hack: function(a, b) {
+			a = a || "all";
+			document.createElement = function(b) {
+				if ("string" !== typeof b || "object" !== b.toLowerCase()) return u.apply(document, arguments);
+				var c = !1;
+				switch (a) {
+					case "all":
+						c = !0;
+						break;
+					case "jwplayer":
+						c = Error().stack, c = 0 <= c.indexOf("jwplayer.js") && 0 <= c.indexOf("embed") && 0 <= c.indexOf("sendEvent")
+				}
+				return c ? E() : u.apply(document, arguments)
+			};
+			if (b && !window.navigator.plugins["Shockwave Flash"]) {
+				var c = {
+					description: "Shockwave Flash",
+					suffixes: "swf",
+					type: "application/x-shockwave-flash"
+				};
+				window.navigator.mimeTypes["application/x-shockwave-flash"] = c;
+				var d = {
+					description: "Shockwave Flash 10.0 r0 compatible",
+					filename: "shumway.js",
+					length: 1,
+					name: "Shockwave Flash",
+					0: c
+				};
+				c.enabledPlugin = d;
+				window.navigator.plugins["Shockwave Flash"] = d
+			}
+		},
+		ua: {
+			w3: !0,
+			pv: [10, 0, 0]
+		}
+	}
+}();

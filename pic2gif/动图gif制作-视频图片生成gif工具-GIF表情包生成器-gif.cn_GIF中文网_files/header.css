@@ -1,0 +1,77 @@
+.h-logo {
+    line-height: 52px;
+    height: 45px;
+    color: #db5d00;
+    font-size: 42px;
+    position: relative
+}
+
+.h-logo:hover:after, .h-logo:hover:before {
+    display: block
+}
+
+.h-logo:before {
+    display: none;
+    position: absolute;
+    content: "";
+    background: url(/public/static/img/gif/arrow.png) no-repeat 50%;
+    width: 49px;
+    height: 24px;
+    right: -51px;
+    top: 0;
+    background-size: cover;
+}
+
+.h-logo:after {
+    display: none;
+    position: absolute;
+    content: "拖动LOGO到书签栏，立即收藏GIF中文网";
+    left: 0;
+    top: 60px;
+    width: 300px;
+    height: 36px;
+    background: #000;
+    border-radius: 18px;
+    border: 2px dashed #f7b502;
+    font-size: 14px;
+    color: #fff;
+    line-height: 36px;
+    text-align: center;
+    opacity: .6;
+    z-index: 9999 !important;
+}
+
+.active1 {
+    color: #6597fe !important;
+}
+
+.foot a, .log_reg a {
+    text-decoration: none;
+}
+
+.userxl {
+    width: 16px
+}
+
+.homeW {
+    width: 1200px !important;
+    margin: 0 auto;
+}
+
+.homeNone {
+    display: none;
+}
+
+.active {
+    color: #6597fe !important;
+}
+
+.dbysxxnew {
+    color: #fff;
+    line-height: 48px;
+    height: 48px;
+}
+.logmethods{
+    box-shadow:none!important;
+    background-color:transparent!important;
+}

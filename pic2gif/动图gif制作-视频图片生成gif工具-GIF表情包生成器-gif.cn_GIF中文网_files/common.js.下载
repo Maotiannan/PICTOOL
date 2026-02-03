@@ -1,0 +1,56 @@
+//layui
+var _log="";//登录
+layui.use(['layer','laypage'],function(){
+    var layer=layui.layer;
+    var laypage = layui.laypage;
+    var count = $("#count").val();
+    // login
+    $("#log").click(function(){
+        _log=layer.open({
+            skin:'logmethods',
+            title:false,
+            type:2,
+            closeBtn:0,
+            shade:0.7,
+            shadeClose:true,
+            content:['/login', 'no'],
+            area:['750px','480px'],
+        })
+    });
+    //reg liuqi修改点击注册也弹出新微信登录弹窗
+    $("#reg").click(function(){
+        _reg=layer.open({
+            skin:'logmethods',
+            title:false,
+            type:2,
+            closeBtn:0,
+            shade:0.7,
+            shadeClose:true,
+            content:['/login', 'no'],
+            area:['750px','480px'],
+        })
+    });
+    $('.upload_file_login').click(function () {
+        var cookie = $('#cookie').val(), user_id = $('.user_uid').val();
+        if (user_id) {
+            cookie = user_id;
+        }
+        console.log('common:38', cookie);
+        if (cookie == -1 || cookie == '') {
+            var layer = layui.layer;
+            _log = layer.open({
+                skin: 'logmethods',
+                title: false,
+                type: 2,
+                closeBtn: 0,
+                shade: 0.7,
+                shadeClose: true,
+                content: ['/login', 'no'],
+                area: ['750px', '480px'],
+            })
+            return !1;
+        }
+    })
+});
+
+

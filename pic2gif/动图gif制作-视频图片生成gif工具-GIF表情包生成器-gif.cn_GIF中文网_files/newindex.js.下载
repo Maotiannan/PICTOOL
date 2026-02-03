@@ -1,0 +1,67 @@
+layui.use(['form', 'layedit', 'laydate', 'layer'], function() {
+    var form = layui.form,
+        layer = layui.layer;
+    var user_id = $('#user_id').val();
+    if (cookie == -1 || user_id == -1) {
+        //未登录或非会员 
+        $('#giftext').val('gif.cn');
+    }
+    form.on('select(speedId)', function(data) {
+        console.log(data.value); //得到被选中的值
+        var filedelayN = Number(data.value) * 800
+        cheakfile();
+        $('.filedelay').val(filedelayN);
+        $('.file-preview-img').attr('filedelay', filedelayN);
+    })
+});
+$(document).ready(function() {
+    var $container = $('.list-style');
+    if ($container.hasClass("masonry")) $container.masonry('destroy');
+    $container.imagesLoaded(function() {
+        $container.masonry({
+            itemSelector: '.style-item'
+        });
+    });
+});
+$('#giftext').blur(function() {
+    var giftext = $('#giftext').val();
+    if (cookie == -1 && giftext != 'gif.cn') {
+        layer.msg('登录即可去掉水印文字');
+        $('#giftext').val('gif.cn');
+        return;
+    }
+});
+$('.payvip').click(function(event) {
+    user_id = $('.user_uid').val();
+    if (user_id) {
+        cookie = user_id;
+    }
+    if (cookie == -1) {
+        layui.use('layer', function() {
+            var layer = layui.layer;
+            _log = layer.open({
+                skin: 'logmethods',
+                title: false,
+                type: 2,
+                closeBtn: 0,
+                shade: 0.7,
+                shadeClose: true,
+                content: ['/login', 'no'],
+                area:['750px','480px'],
+            })
+        })
+    } else {
+        layer.open({
+            type: 2,
+            title: false,
+            closeBtn: 0,
+            area: ['913px', '492px'],
+            content: ['/pay/userpay?vip_id=4', 'no'],
+        });
+    }
+});
+$('.qksc').click(function(event) {
+    $('.file-preview-thumbnails').remove();
+    $('#makegifinfo').show()
+    $('#makegifbuttondiv').hide()
+});

@@ -1,0 +1,32 @@
+$(".menu a").each(function() {
+    $this = $(this);
+    if ($this[0].href == String(window.location)) {
+        $(".menu a").removeClass("active");
+        $this.addClass("active");
+    } else if (String(window.location) == "http://www.gif.cn/tools/cut" || String(window.location) == 'http://www.gif.cn/tools/video' || String(window.location) == 'http://www.gif.cn/tools/compress') {
+        $(".menu a").removeClass("active");
+        if ($this[0]['pathname'] == '/tools/index') {
+            $this.addClass("active1");
+        }
+    }
+});
+$(document).on("click", ".qr_codes", function() {
+    layer.open({
+        type: 2,
+        title: false,
+        area: ['400px', '400px'],
+        content: ['/User/service', 'no']
+    });
+});
+$(document).on("click", ".esc", function() {
+    $.ajax({
+        url: '/Login/logout',
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            param1: 'value1'
+        },
+    }).done(function(res) {
+        window.location.reload();
+    })
+});

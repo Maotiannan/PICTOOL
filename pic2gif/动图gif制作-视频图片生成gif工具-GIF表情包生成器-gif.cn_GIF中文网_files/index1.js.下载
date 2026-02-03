@@ -1,0 +1,2833 @@
+var fileurl = window.URL || window.webkitURL;
+var gif_vwidth = 195;
+var gif_vheight = 129;
+var giforder = 1;
+var offset = 24;
+var noffset = 12;
+var framequlity = 9; //0-10
+var fangda = false;
+var suoxiao = false;
+var bilisd = true;
+var shared;
+var cookie = $('#cookie').val();
+var user_id = $('#user_id').val();
+var vipwatermark = true;
+var uploadtype = '';
+function dataURLtoBlob(dataurl) {
+	var arr = dataurl.split(','),
+		mime = arr[0].match(/:(.*?);/)[1],
+		bstr = atob(arr[1]),
+		n = bstr.length,
+		u8arr = new Uint8Array(n);
+	var blob;
+	while (n--) {
+		u8arr[n] = bstr.charCodeAt(n);
+	}
+	try {
+		blob = new Blob([u8arr], {
+			type: mime
+		});
+	} catch (e) {
+		// TypeError old chrome and FF
+		window.BlobBuilder = window.BlobBuilder ||
+			window.WebKitBlobBuilder ||
+			window.MozBlobBuilder ||
+			window.MSBlobBuilder;
+		if (e.name == 'TypeError' && window.BlobBuilder) {
+			var bb = new BlobBuilder();
+			bb.append(u8arr.buffer);
+			blob = bb.getBlob(mime);
+		} else if (e.name == "InvalidStateError") {
+			// InvalidStateError (tested on FF13 WinXP)
+			blob = new Blob(u8arr.buffer, {
+				type: mime
+			});
+		} else {
+			blob = new Blob([u8arr], {
+				type: mime
+			});
+		}
+	}
+	//var blob = new Blob([u8arr], {type:mime});
+	return blob;
+}
+
+function getmoregif() {
+
+	$('#moregifb_loading').attr('src', '/images/loading3.gif');
+	//开始获取最新分享图片
+	var aj = $.ajax({
+		url: './img/admin/json?action=filelist&type=gif&sort=hot&apikey=gif5filelist&limit=' + offset + ',24', // 跳转到 action
+		type: 'get',
+		cache: false,
+		dataType: 'json',
+		success: function(data) {
+
+			if (data.status_code != '403' && Object.getOwnPropertyNames(data).length == 24) {
+
+				$('#gifscontainer').height($('#gifscontainer').height());
+				$('#gifs').hide();
+				$('#gifs').empty();
+
+				var inum = 0;
+				for (var item in data) {
+					////console.log(data[item].image_thumb_url);//image_viewer
+					$('#gifs').append('<li class="col-lg-2 col-md-2 col-sm-3 col-xs-4"><a class="sharegifs" href="' + data[item].image_shorturl +
+						'" title="' + data[item].image_name + '" target="_blank"><img class="img-responsive" src="' + data[item].image_thumb_url +
+						'" alt="' + data[item].image_name + '"></a></li>');
+					inum = inum + 1;
+				}
+				$('#gifs').fadeIn('normal', function() {
+					$("#gifscontainer").height('auto');
+				});
+				offset = offset + 24;
+				$('#moregifb_loading').attr('src', '/images/more.png');
+
+			} else {
+				offset = 24;
+				$('#moregifb_loading').attr('src', '/images/more.png');
+			}
+		},
+		error: function(e) {
+			$('#moregifb_loading').attr('src', '/images/more.png');
+		}
+	});
+}
+
+function getmoregif_o() {
+	$('#moregifb').hide();
+	$('#nomoregifb').hide();
+	$('#remoregifb').hide();
+	$('#moregifb_loading_o').show();
+	//开始获取最新分享图片
+	setTimeout(function() {
+		var aj = $.ajax({
+			url: '../img/admin/json?action=filelist&type=gif&sort=hot&apikey=gif5filelist&limit=' + offset + ',24', // 跳转到 action
+			type: 'get',
+			cache: false,
+			dataType: 'json',
+			success: function(data) {
+				if (data.status_code != '403') {
+					for (var item in data) {
+						////console.log(data[item].image_thumb_url);//image_viewer
+						$('#gifs').append('<li class="col-lg-2 col-md-2 col-sm-3 col-xs-4"><a class="sharegifs" href="' + data[item]
+							.image_shorturl + '" title="' + data[item].image_name +
+							'" target="_blank"><img class="img-responsive" src="' + data[item].image_thumb_url + '" alt="' + data[item]
+							.image_name + '"></a></li>');
+					}
+					offset = offset + 24;
+					$('#moregifb').show();
+					$('#nomoregifb').hide();
+					$('#remoregifb').hide();
+					$('#moregifb_loading_o').hide();
+				} else {
+					$('#moregifb').hide();
+					$('#nomoregifb').show();
+					$('#remoregifb').hide();
+					$('#moregifb_loading_o').hide();
+				}
+			},
+			error: function(e) {
+				$('#moregifb').hide();
+				$('#nomoregifb').hide();
+				$('#remoregifb').show();
+				$('#moregifb_loading_o').hide();
+			}
+		});
+	}, 1000);
+
+}
+
+function ngetmoregif() {
+
+	$('#nmoregifb_loading').attr('src', '/images/loading3.gif');
+	//开始获取最新分享图片
+	var aj = $.ajax({
+		url: './img/admin/json?action=filelist&type=gif&sort=new&apikey=gif5filelist&limit=' + noffset + ',12', // 跳转到 action
+		type: 'get',
+		cache: false,
+		dataType: 'json',
+		success: function(data) {
+
+			if (data.status_code != '403' && Object.getOwnPropertyNames(data).length == 12) {
+
+				$('#newgifscontainer').height($('#newgifscontainer').height());
+				$('#newgifs').hide();
+				$('#newgifs').empty();
+				var inum = 0;
+				for (var item in data) {
+					////console.log(data[item].image_thumb_url);//image_viewer
+					$('#newgifs').append('<li class="col-lg-2 col-md-2 col-sm-3 col-xs-4"><a class="sharegifs" href="' + data[item]
+						.image_shorturl + '" title="' + data[item].image_name + '" target="_blank"><img class="img-responsive" src="' +
+						data[item].image_thumb_url + '" alt="' + data[item].image_name + '"></a></li>');
+					inum = inum + 1;
+				}
+				$('#newgifs').fadeIn('normal', function() {
+					$("#newgifscontainer").height('auto');
+				});
+				noffset = noffset + 12;
+				$('#nmoregifb_loading').attr('src', '/images/more.png');
+			} else {
+				noffset = 12;
+				$('#nmoregifb_loading').attr('src', '/images/more.png');
+			}
+		},
+		error: function(e) {
+			$('#nmoregifb_loading').attr('src', '/images/more.png');
+		}
+	});
+}
+
+function ngetmoregif_o() {
+	$('#nmoregifb').hide();
+	$('#nnomoregifb').hide();
+	$('#nremoregifb').hide();
+	$('#nmoregifb_loading_o').show();
+	//开始获取最新分享图片
+	setTimeout(function() {
+		var aj = $.ajax({
+			url: '../img/admin/json?action=filelist&type=gif&sort=new&apikey=gif5filelist&limit=' + noffset + ',12', // 跳转到 action
+			type: 'get',
+			cache: false,
+			dataType: 'json',
+			success: function(data) {
+				if (data.status_code != '403') {
+					for (var item in data) {
+						////console.log(data[item].image_thumb_url);//image_viewer
+						$('#newgifs').append('<li class="col-lg-2 col-md-2 col-sm-3 col-xs-4"><a class="sharegifs" href="' + data[
+								item].image_shorturl + '" title="' + data[item].image_name +
+							'" target="_blank"><img class="img-responsive" src="' + data[item].image_thumb_url + '" alt="' + data[item]
+							.image_name + '"></a></li>');
+					}
+					noffset = noffset + 12;
+					$('#nmoregifb').show();
+					$('#nnomoregifb').hide();
+					$('#nremoregifb').hide();
+					$('#nmoregifb_loading_o').hide();
+				} else {
+					$('#nmoregifb').hide();
+					$('#nnomoregifb').show();
+					$('#nremoregifb').hide();
+					$('#nmoregifb_loading_o').hide();
+				}
+			},
+			error: function(e) {
+				$('#nmoregifb').hide();
+				$('#nnomoregifb').hide();
+				$('#nremoregifb').show();
+				$('#nmoregifb_loading_o').hide();
+			}
+		});
+	}, 1000);
+
+}
+
+function bytesToSize(bytes) {
+	if (bytes === 0) return '0 B';
+	var k = 1024, // or 1024
+		sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
+		i = Math.floor(Math.log(bytes) / Math.log(k));
+	return (bytes / Math.pow(k, i)).toPrecision(3) + ' ' + sizes[i];
+}
+
+function canvasSupport() {
+	return !!document.createElement('canvas').getContext;
+}
+
+function alertMessage(msg) {
+	$(".alert-messages .message .message-text").html(msg);
+	$(".alert-messages").fadeIn();
+	setTimeout('$(".alert-messages").fadeOut()', 3000);
+
+}
+
+function showDuoshuo() {
+	layer.open({
+		type: 2,
+		title: '留言建议',
+		shadeClose: true,
+		shade: 0.8,
+		area: ['80%', '80%'],
+		content: './duoshuo.html' //iframe的url
+	});
+}
+
+function opengif(url) {
+	layer.open({
+		type: 2,
+		title: 'gif浏览',
+		shadeClose: true,
+		shade: 0.8,
+		area: ['90%', '90%'],
+		content: url //iframe的url
+	});
+}
+
+function showhelp() {
+	var content = $('#gifhelp').html();
+	layer.open({
+		type: 1, //page层
+		area: ['80%', '80%'],
+		title: 'gif在线制作使用帮助',
+		skin: 'layui-layer-lan', //墨绿风格
+		shade: 0.6, //遮罩透明度
+		shift: -1, //0-6的动画形式，-1不开启
+		content: content
+	});
+}
+
+function showmygif(info, msg, gifframe, w, h) {
+	var blob = dataURLtoBlob(info.dataURL);
+	var url = fileurl.createObjectURL(blob);
+	var urldata = info.dataURL;
+	var watermark = "";
+	var cookie = $('#cookie').val();
+	var is_mobile = $('#is_mobile').val();
+	user_id = $('.user_uid').val();
+	if (user_id) {
+		cookie = user_id;
+	}
+	if (cookie == -1) { //未登录
+		// watermark = '<span class="down_img" style="cursor: pointer;" onclick="watermark(1)" style="">去除水印</span>';
+		login = '<br><br><span class="down_img" style="cursor: pointer;" onclick="watermark(this)" url="' + url +
+			'">下载图片</span>';
+	} else { //已登录就可以下载gif
+		if (is_mobile == 1) { //手机端
+			login = '<a href="' + url + '" class="down_img" target="_blank">下载图片</a>';
+		} else {
+			$.ajax({
+				url: '/index/istype',
+				type: 'POST',
+				dataType: 'json',
+				async: false,
+				data: {param1: 'value1'},
+			})
+				.done(function (res) {
+					type = res.type
+					user_product_id = res.user_product_id
+					shiyongcs = res.sycs
+				})
+			if (type == 1) {
+				login = '<a  class="down_img" id="sjhy" style="cursor:pointer">下载图片</a>';
+			} else {
+				if (shiyongcs > 0) {
+					login = '<a  class="down_img" id="cstj" href="' + url + '" style="cursor:pointer" download="gif">下载图片</a>';
+				} else {
+					login = '<a  class="down_img" id="sjhy" style="cursor:pointer">下载图片</a>';
+				}
+			}
+		}
+	}
+
+	var content = '';
+	w = w + 100;
+	console.log($('#gifwidth').val())
+	console.log(vipwatermark)
+	if (vipwatermark == true) {
+		content = '<div align="center" style="height:100%;padding:25px 0;background-color:#fff"><img id="gif-Watermark-img" src="' + url + '" download="' + url + '" style="max-width:100%;max-height:80%;"><br>' + '<div style="line-height:25px;margin-top:10px">' + msg + '</div>'
+			//+'<br><button type="button" class="btn btn-primary" onclick="sharegif('+gifframe+','+info.data.length+')">分享图片</button>'
+			+
+			watermark + login + '<br><br>'
+			// +'<div style="font-size:1em;">提示：分享网站后可以修改水印。或使用： <a href="http://www.nicetool.net/app/gif_maker.html" target="_blank" style="color:red;"><b>无水印版</b></a></div>'
+			+
+			'</div>' +
+			'<div style="position: absolute;top: -999999px;"><img id="shareimgdata" src="' + urldata + '" /></div>';
+	}
+	if (vipwatermark == false) {
+
+		if ($('#gifwidth').val() > 750) {
+			content = '<div align="center" style="height:100%;padding:25px 0;background-color:#fff"><div style="width:90%;max-height:80%;position: relative;"><img id="gif-Watermark-img" src="' + url + '" download="' + url + '" style="max-width:100%;max-height:400px;"></div><br>' + '<div style="line-height:25px;margin-top:10px">' + msg + '</div>'
+				//+'<br><button type="button" class="btn btn-primary" onclick="sharegif('+gifframe+','+info.data.length+')">分享图片</button>'
+				+
+				watermark + login + '<br><br>'
+				// +'<div style="font-size:1em;">提示：分享网站后可以修改水印。或使用： <a href="http://www.nicetool.net/app/gif_maker.html" target="_blank" style="color:red;"><b>无水印版</b></a></div>'
+				+
+				'</div>' +
+				'<div style="position: absolute;top: -999999px;"><img id="shareimgdata" src="' + urldata + '" /></div>';
+		}
+		if ($('#gifwidth').val() <= 750) {
+			content = '<div align="center" style="height:100%;padding:25px 0;background-color:#fff"><img id="gif-Watermark-img" src="' + url + '" download="' + url + '" style="max-width:100%;max-height:80%;"><br>' + '<div style="line-height:25px;margin-top:10px">' + msg + '</div>'
+				//+'<br><button type="button" class="btn btn-primary" onclick="sharegif('+gifframe+','+info.data.length+')">分享图片</button>'
+				+
+				watermark + login + '<br><br>'
+				// +'<div style="font-size:1em;">提示：分享网站后可以修改水印。或使用： <a href="http://www.nicetool.net/app/gif_maker.html" target="_blank" style="color:red;"><b>无水印版</b></a></div>'
+				+
+				'</div>' +
+				'<div style="position: absolute;top: -999999px;"><img id="shareimgdata" src="' + urldata + '" /></div>';
+		}
+	}
+	if ($(window).width() < 1366) {
+		var aa = layer.open({
+			type: 1, //page层
+			area: ['90%', '65%'],
+			title: '图片预览',
+			skin: 'layui-layer-lan', //墨绿风格
+			shade: 0.6, //遮罩透明度
+			closeBtn: 2,
+			shift: -1, //0-6的动画形式，-1不开启
+			content: content
+		});
+	} else {
+		var aa = layer.open({
+			type: 1, //page层
+			area: ['50%', '65%'],
+			title: '图片预览',
+			skin: 'layui-layer-lan', //墨绿风格
+			shade: 0.6, //遮罩透明度
+			closeBtn: 2,
+			shift: -1, //0-6的动画形式，-1不开启
+			content: content
+		});
+	}
+}
+
+function downloadImage(url) {
+	var formData = new FormData();
+	formData.append('src', url);
+
+	$.ajax({
+		url: '/Index/upload',
+		type: 'POST',
+		data: formData,
+		dataType: 'JSON',
+		cache: false, // 不缓存
+		processData: false, // jQuery不要去处理发送的数据
+		contentType: false, // jQuery不要去设置Content-Type请求头
+		success: function(data) {
+			if (data.code == 1) {
+				$('#down_img').attr('href', data.msg);
+			}
+		},
+		error: function() {}
+	})
+	const eleLink = document.createElement('a')
+	eleLink.download = url;
+	eleLink.style.display = 'none'
+	eleLink.href = url
+	// 触发点击
+	document.body.appendChild(eleLink)
+	eleLink.click()
+	// 然后移除
+	document.body.removeChild(eleLink)
+}
+
+function watermark(even) {
+	var is_mobile = $('#is_mobile').val();
+	if (is_mobile == 1) {
+		window.location.href = "/login";
+	} else {
+		var cookie = $('#cookie').val();
+		user_id = $('.user_uid').val();
+		if (user_id) {
+			cookie = user_id;
+		}
+		if (cookie == -1) {
+			var layer = layui.layer;
+			_log = layer.open({
+				skin: 'logmethods',
+				title: false,
+				type: 2,
+				closeBtn: 0,
+				shade: 0.7,
+				shadeClose: true,
+				content: ['/login', 'no'],
+				area:['750px','480px'],
+			})
+
+		} else {
+			$.ajax({
+                url: '/index/istype',
+                type: 'POST',
+                dataType: 'json',
+                async:false,
+                data: {param1: 'value1'},
+            })
+            .done(function(res) {
+                
+                type = res.type
+                user_product_id = res.user_product_id
+                shiyongcs = res.sycs
+                
+                
+            })
+			
+			url = $(even).attr('url');
+			if (type > 1) {
+				
+				tjcs()
+				var link = document.createElement('a');
+				link.setAttribute("download", 'gif');
+				link.href = url;
+				link.click();		
+				
+			} else {
+				shengyu = 1 - shiyongcs
+				if(shengyu > 0){
+					pay()
+				}else{
+					tjcs()
+					var link = document.createElement('a');
+					link.setAttribute("download", 'gif');
+					link.href = url;
+					link.click();
+				}
+				
+			}
+			// $.ajax({
+   //              url: '/index/toolstatus',
+   //              type: 'POST',
+   //              dataType: 'json',
+   //              async:false,
+   //              data: {param1: 'value1'},
+   //          })
+   //          .done(function(res) {
+                
+   //              type = res.type
+   //              user_product_id = res.user_product_id
+   //              sycs = res.sycx
+                
+   //          })
+			
+			// url = $(even).attr('url');
+			// if (type == 1) {
+			// 	if(sycs <= 0){
+			// 		parent.layer.open({
+   //              		type: 2,
+   //              		title:false,
+   //              		closeBtn: 0,
+   //              		area:['845px','540px'],
+   //              		content: ['/pay/userpay?vip_id=4','no'],
+   //          		});
+			// 	}else{
+			// 		tjcs()
+			// 		var link = document.createElement('a');
+			// 		link.setAttribute("download", 'gif');
+			// 		link.href = url;
+			// 		link.click();
+			// 	}
+			// } else {
+			// 	if(type == 7 || type == 8){
+			// 		if(sycs <= 0){
+			// 			parent.layer.open({
+   //              			type: 2,
+   //              			title:false,
+   //              			closeBtn: 0,
+   //              			area:['845px','540px'],
+   //              			content: ['/pay/userpay?vip_id=4','no'],
+   //          			});
+			// 		}else{
+			// 			tjcs()
+			// 			var link = document.createElement('a');
+			// 			link.setAttribute("download", 'gif');
+			// 			link.href = url;
+			// 			link.click();
+			// 		}
+			// 	}else{
+			// 		var link = document.createElement('a');
+			// 		link.setAttribute("download", 'gif');
+			// 		link.href = url;
+			// 		link.click();
+			// 	}
+				
+			// }
+		}
+	}
+}
+
+function sharegif(gifframe, datalen) {
+	if (datalen > 1024 * 1024 * 10) {
+		layer.msg('图片太大不能上传！建议压缩或修改大小后再分享');
+		return false;
+	}
+
+	if ($("#shareimgdata").length == 0) {
+		return false;
+	}
+	if (gifframe < 2) {
+		layer.msg('不能分享2帧以下的gif图片');
+		return false;
+	}
+	var fileinput = layer.prompt({
+		title: '请描述一下这张图片',
+		id: 'imgdesinput',
+		formType: 0 //prompt风格，支持0-2
+	}, function(filename) {
+
+		var pattern = /[^\x00-\xff]/;
+		if (filename.length < 2 || !pattern.test(filename)) {
+
+			layer.tips('请使用有意义的信息描述图片', '.layui-layer-input');
+
+		} else {
+
+			layer.close(fileinput);
+			var uploadgif = layer.load(0, {
+				shade: [0.1, '#fff'] //0.1透明度的白色背景
+			});
+
+			var aj = $.ajax({
+				url: './img/api.php', // 跳转到 action
+				data: {
+					key: 'gif5netgood',
+					filename: filename + '.gif',
+					upload: ($("#shareimgdata").attr('src') + "").substr(22)
+				},
+				type: 'post',
+				cache: false,
+				dataType: 'json',
+				success: function(data) {
+					if (data.status_code == "200") {
+						// view("修改成功！");
+						//alert(data.data.image_viewer);
+						shared = true;
+						addCookie('shared', '1', 24 * 30);
+						layer.closeAll();
+						layer.open({
+							type: 2,
+							title: '图片分享查看',
+							shadeClose: true,
+							shade: 0.8,
+							area: ['80%', '80%'],
+							content: data.data.image_shorturl //iframe的url
+						});
+
+					} else {
+						layer.close(uploadgif);
+						alert('上传错误：' + data.status_txt);
+					}
+				},
+				error: function(e) {
+					// view("异常！");
+					layer.close(uploadgif);
+					alert('上传错误：网络异常!');
+				}
+			});
+		}
+	});
+}
+
+function addcam() {
+	alertMessage('摄像头拍摄GIF功能正在完善中。');
+}
+
+var getvideoimageing = false;
+
+function getvideoimage() {
+	if ($(".file-preview-img").length == 0) {
+		//console.log($('#video2gif').width()+' '+$('#video2gif').height());
+		//初始化gif高宽
+		$('#gifwidth').val($('#video2gif').width());
+		$('#gifheight').val($('#video2gif').height());
+		$('#videocanvas').width($('#video2gif').width());
+		$('#videocanvas').height($('#video2gif').height());
+		cheakfile();
+	}
+	if ($('#video2gifimage').find('canvas').length >= 1000) {
+		getvideoimageing = false;
+		var video = $("#video2gif").get(0).pause();
+		alert('最多只能取1000帧图片！');
+		return;
+	}
+
+	var video = $("#video2gif").get(0).play();
+	if (!getvideoimageing) {
+		videodrawCanvas();
+		getvideoimageing = true;
+	}
+
+}
+
+function stopvideoimage() {
+	var video = $("#video2gif").get(0).pause();
+}
+
+function addvideoimage() {
+
+	if ($('#video2gifimage').find('canvas').length <= 0) {
+		$('.layui-layer-shade').remove();
+		$('.layui-layer').remove();
+		cheakfile();
+		addevent();
+		return false;
+	}
+
+	$('#video2gifinfo').text(' 正在生成gif..');
+	var video = $("#video2gif").get(0).pause();
+	var gifwidth = $('#gifwidth').val();
+	var gifheight = $('#gifheight').val();
+	var gif = new GIF({
+		workers: 10,
+		quality: 10,
+		workerScript: './lib/gifjs/gif.worker.js',
+		width: gifwidth,
+		height: gifheight
+	});
+	$('#video2gifimage').find('canvas').each(function() {
+		var canvas = $(this).get(0);
+		//alert($(this).get(0));
+		gif.addFrame(canvas, {
+			delay: 100,
+			copy: true
+		});
+	});
+
+	gif.on('finished', function(blob) {
+		var filenum = $('.file-drop-zone').find('.file-preview-thumbnails').length + 1;
+		var filehtml = '<div class="file-preview-thumbnails">' +
+			'  <div class="file-preview-frame" data-fileindex="0">' +
+			'    <img class="file-preview-img" filetype="gif" filenum="' + filenum + '" disposal="0" filedelay="100" src="' +
+			fileurl.createObjectURL(blob) + '" class="file-preview-image" title="' + filenum + '" alt="' + filenum +
+			'" style="height:' + gif_vheight + 'px;">' +
+			'    <div class="file-thumbnail-footer">' +
+			'      <div class="file-actions">' +
+			'        <div class="file-footer-buttons">' +
+			'            <div class="input-group input-group-sm">' +
+			'	 			<span class="input-group-addon">序号</span>' +
+			'    			<input type="text" class="form-control filenum" aria-describedby="basic-addon1" value="' + filenum +
+			'" style="width:50px;">' +
+			'				<span class="input-group-addon">延迟</span>' +
+			'	 			<input type="text" class="form-control filedelay" aria-describedby="basic-addon1" value="100" style="width:50px;">' +
+			'		  	  </div>' +
+			'            <div class="input-group input-group-sm">' +
+			'				<span class="input-group-addon file-remove-one"> <img src="/public/static/img/gif/new_del.png" title="删除此图片" width="15px"> </span>' +
+			'		      </div>' +
+			'         </div>' +
+			'       </div>' +
+			'     </div>' +
+			'   </div>' +
+			' </div>';
+		$('#file-drop-zone-clearfix').before(filehtml);
+		//关闭弹窗
+		layer.closeAll();
+		cheakfile();
+		addevent();
+	});
+	gif.render();
+}
+
+function removevideoimage() {
+	var video = $("#video2gif").get(0).pause();
+	$('#video2gifimage').empty();
+	$('#video2gifframenum').text(0);
+	$('#video2giftime').text(0);
+}
+
+function getMobileHeight(gif_vheight) {
+	if (/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) {
+		gif_vheight = gif_vheight * 120 / 195;
+	}
+	return gif_vheight;
+}
+
+function videodrawCanvas() {
+	var video = $("#video2gif");
+	var _video = video.get(0);
+
+	if (video.length == 0 || _video.paused || _video.ended) {
+		getvideoimageing = false;
+		return;
+	}
+	if ($('#video2gifimage').find('canvas').length >= 600) {
+		getvideoimageing = false;
+		var video = $("#video2gif").get(0).pause();
+		alert('最多只能取600帧图片！');
+		return;
+	}
+	var gifwidth = $('#gifwidth').val();
+	var gifheight = $('#gifheight').val();
+	var canvas = $('<canvas width="' + gifwidth + 'px" height="' + gifheight + 'px"></canvas>');
+	var _canvas = canvas.get(0);
+	var context = _canvas.getContext("2d");
+	context.drawImage(_video, 0, 0, _canvas.width, _canvas.height);
+	//var $image = $('<img src="'+_canvas.toDataURL("image/png")+'">');
+	$('#video2gifimage').append(canvas);
+	$('#video2gifframenum').text($('#video2gifimage').find('canvas').length);
+	$('#video2giftime').text(parseInt($('#video2giftime').text()) + 100);
+	setTimeout(videodrawCanvas, 100);
+}
+
+var getflashimageing = false;
+var getflashimagestop = true;
+
+function getflashimage() {
+	if ($('#flash2gifimage').find('canvas').length >= 600) {
+		getflashimageing = false;
+		var video = $("#video2gif").get(0).pause();
+		alert('最多只能取600帧图片！');
+		return;
+	}
+	if (!getflashimageing) {
+		getflashimageing = true;
+		getflashimagestop = false;
+		flashdrawCanvas();
+	}
+}
+
+function stopflashimage() {
+	getflashimagestop = true;
+}
+
+function removeflashimage() {
+	getflashimagestop = true;
+	$('#flash2gifback').empty();
+	$('#flash2gifframenum').text(0);
+	$('#flash2giftime').text(0);
+}
+
+function addflashimage() {
+	if ($('#flash2gifback').find('canvas').length <= 0) {
+		$('.layui-layer-shade').remove();
+		$('.layui-layer').remove();
+		cheakfile();
+		addevent();
+		return false;
+	}
+	getflashimagestop = true;
+	var gifwidth = $('#gifwidth').val();
+	var gifheight = $('#gifheight').val();
+	$('#flash2gifinfo').text(' 正在生成gif..');
+	var gif = new GIF({
+		workers: 10,
+		quality: 10,
+		workerScript: './lib/gifjs/gif.worker.js',
+		width: gifwidth,
+		height: gifheight
+	});
+	$('#flash2gifback').find('canvas').each(function() {
+		var canvas = $(this).get(0);
+		//alert($(this).get(0));
+		gif.addFrame(canvas, {
+			delay: 100,
+			copy: true
+		});
+	});
+
+	gif.on('finished', function(blob) {
+		gif_vheight = getMobileHeight(gif_vheight)
+		var filenum = $('.file-drop-zone').find('.file-preview-thumbnails').length + 1;
+		var filehtml = '<div class="file-preview-thumbnails">' +
+			'  <div class="file-preview-frame" data-fileindex="0">' +
+			'    <img class="file-preview-img" filetype="gif" filenum="' + filenum + '" disposal="0" filedelay="100" src="' +
+			fileurl.createObjectURL(blob) + '" class="file-preview-image" title="' + filenum + '" alt="' + filenum +
+			'" style="height:' + gif_vheight + 'px;">' +
+			'    <div class="file-thumbnail-footer">' +
+			'      <div class="file-actions">' +
+			'        <div class="file-footer-buttons">' +
+			'            <div class="input-group input-group-sm">' +
+			'	 			<span class="input-group-addon">序号</span>' +
+			'    			<input type="text" class="form-control filenum" aria-describedby="basic-addon1" value="' + filenum +
+			'" style="width:50px;">' +
+			'				<span class="input-group-addon">延迟</span>' +
+			'	 			<input type="text" class="form-control filedelay" aria-describedby="basic-addon1" value="100" style="width:50px;">' +
+			'		  	  </div>' +
+			'            <div class="input-group input-group-sm">' +
+			'				<span class="input-group-addon file-remove-one"> <img src="/public/static/img/gif/new_del.png" title="删除此图片" width="15px"> </span>' +
+			'		      </div>' +
+			'         </div>' +
+			'       </div>' +
+			'     </div>' +
+			'   </div>' +
+			' </div>';
+		$('#file-drop-zone-clearfix').before(filehtml);
+		//关闭弹窗
+		layer.closeAll();
+		cheakfile();
+		addevent();
+	});
+	gif.render();
+}
+
+function flashdrawCanvas() {
+	if (getflashimagestop) {
+		getflashimageing = false;
+		return false;
+	}
+	var gifwidth = $('#gifwidth').val();
+	var gifheight = $('#gifheight').val();
+	if ($('#flash2gifback').find('canvas').length >= 600) {
+		getflashimageing = false;
+		alert('最多只能取600帧图片！');
+		return;
+	}
+
+	var canvas = $('<canvas width="' + gifwidth + 'px" height="' + gifheight + 'px"></canvas>');
+	var _canvas = canvas.get(0);
+	var context = _canvas.getContext("2d");
+	$('#flash2gifback').append(canvas);
+	var backcolor = $(document.getElementById('flashcanvas').contentWindow.document.body).find('#easelContainer').children(
+		'div').css("background-color");
+
+	context.fillStyle = backcolor;
+	context.fillRect(0, 0, gifwidth, gifheight);
+
+	var flashcanvas = $(document.getElementById('flashcanvas').contentWindow.document.body).find('canvas');
+	var _flashcanvas = flashcanvas.get(0);
+	var flashcontext = _flashcanvas.getContext("2d");
+
+	//var imgData=flashcontext.getImageData(0,0,gifwidth,gifheight);
+	//context.putImageData(imgData,0,0,0,0,gifwidth,gifheight);
+	var image = new Image();
+
+	image.onload = function() {
+		$('#flash2gifframenum').text($('#flash2gifback').find('canvas').length);
+		$('#flash2giftime').text(parseInt($('#flash2giftime').text()) + 100);
+		context.drawImage(image, 0, 0);
+		setTimeout(flashdrawCanvas, 100);
+	}
+	image.src = _flashcanvas.toDataURL("image/png")
+	//var $image = $('<img src="'+_canvas.toDataURL("image/png")+'">');
+}
+
+function cheakfile() {
+	var sucainum = $('.file-drop-zone').find('.file-preview-thumbnails').length;
+	if (sucainum > 0) { //素材库有素材
+		$('#makegifinfo').hide();
+		$('#makegifbuttondiv,.img_file_add_Btn,.gif-watermarkSetWrap').show();
+	} else {
+		$('#makegifinfo').show();
+		$('#makegifbuttondiv,.img_file_add_Btn,.gif-watermarkSetWrap').hide();
+	}
+
+	var gifwidth = $('#gifwidth').val();
+	var gifheight = $('#gifheight').val();
+	if (gifwidth >= 2 && gifwidth <= 1920 && gifheight >= 2 && gifheight <= 1920) {
+		gif_vheight = (gifheight / gifwidth) * gif_vwidth;
+		gif_vheight = getMobileHeight(gif_vheight)
+	}
+}
+
+function addevent() {
+	$("#gifheight,#gifwidth,#gifdelay,.filedelay,.filenum").unbind("keyup");
+	$("#gifheight,#gifwidth,#gifdelay,.filedelay,.filenum").bind('keyup', function(e) {
+		$(this).val($(this).val().replace(/\D/g, ''));
+	});
+	var oldh = $("#gifheight").val();
+	var oldw = $("#gifwidth").val();
+	$("#gifheight").unbind("focus");
+	$("#gifheight").bind('focus', function() {
+		$(this).siblings('.hintTextWrap').show()
+	});
+	$("#gifheight").unbind("blur");
+	$("#gifheight").bind('blur', function() {
+		console.log('123')
+		$(this).siblings('.hintTextWrap').hide();
+		var neww = parseInt((oldw * $("#gifheight").val()) / oldh);
+		if (($(this).val() < 2 || $(this).val() > 1920) || ((neww < 2 || neww > 1920 && bilisd))) {
+			// alertMessage('gif图片大小只能在2px至1920px之间');
+			$(this).val(oldh);
+			cheakfile();
+			$('.file-preview-img').height(gif_vheight);
+		} else {
+			cheakfile();
+			$('.file-preview-img').height(gif_vheight);
+		}
+		if (bilisd) {
+			neww = parseInt((oldw * $("#gifheight").val()) / oldh);
+			$("#gifwidth").val(neww);
+			gif_vheight = ($("#gifheight").val() / $("#gifwidth").val()) * gif_vwidth;
+			gif_vheight = getMobileHeight(gif_vheight)
+			//console.log(gif_vwidth+' '+gif_vheight);
+			$('.file-preview-img').height(gif_vheight);
+		}
+		oldh = $("#gifheight").val();
+		oldw = $("#gifwidth").val();
+	});
+	$("#gifwidth").unbind("focus");
+	$("#gifwidth").bind('focus', function() {
+		$(this).siblings('.hintTextWrap').show()
+	});
+	$("#gifwidth").unbind("blur");
+	$("#gifwidth").bind('blur', function() {
+		console.log('321')
+		$(this).siblings('.hintTextWrap').hide();
+		var newh = parseInt((oldh * $("#gifwidth").val()) / oldw);
+		if (($(this).val() < 2 || $(this).val() > 1920) || ((newh < 2 || newh > 1920) && bilisd)) {
+			// alertMessage('gif图片大小只能在2px至1920px之间');
+			$(this).val(oldw);
+			cheakfile();
+			$('.file-preview-img').height(gif_vheight);
+		} else {
+			cheakfile();
+			$('.file-preview-img').height(gif_vheight);
+		}
+		if (bilisd) {
+			newh = parseInt((oldh * $("#gifwidth").val()) / oldw);
+			$("#gifheight").val(newh);
+			gif_vheight = ($("#gifheight").val() / $("#gifwidth").val()) * gif_vwidth;
+			gif_vheight = getMobileHeight(gif_vheight)
+			$('.file-preview-img').height(gif_vheight);
+		}
+		oldh = $("#gifheight").val();
+		oldw = $("#gifwidth").val();
+	});
+	$("#gifdelay").unbind("focus");
+	$("#gifdelay").bind('focus', function() {
+		$(this).siblings('.hintTextWrap').show()
+	});
+	$("#gifdelay").unbind("blur");
+	$("#gifdelay").bind('blur', function() {
+		$(this).siblings('.hintTextWrap').hide();
+		if ($(this).val() < 15 || $(this).val() > 20000) {
+			// alertMessage('间隔时间只能在15ms至20000ms之间');
+			$(this).val(100);
+			cheakfile();
+			$('.filedelay').val(100);
+			$('.file-preview-img').attr('filedelay', 100);
+		} else {
+			cheakfile();
+			$('.filedelay').val($(this).val());
+			$('.file-preview-img').attr('filedelay', $(this).val());
+		}
+	});
+
+	$(".filedelay").unbind("blur");
+	$(".filedelay").bind('blur', function() {
+		if ($(this).val() < 15 || $(this).val() > 20000) {
+			// alertMessage('间隔时间只能在15ms至20000ms之间');
+			$(this).val(100);
+			$(this).parents('.file-preview-thumbnails').find('img').attr('filedelay', '100');
+		} else {
+			$(this).parents('.file-preview-thumbnails').find('img').attr('filedelay', $(this).val());
+		}
+	});
+
+	$(".filenum").unbind("blur");
+	$(".filenum").bind('blur', function() {
+		if (!$(this).val()) {
+			alertMessage('请正确输入序号');
+			$(this).val(1);
+			$(this).parents('.file-preview-thumbnails').find('img').attr('filenum', '1');
+		} else {
+			$(this).parents('.file-preview-thumbnails').find('img').attr('filenum', $(this).val());
+		}
+	});
+
+	$(".filenum").unbind("change");
+	$(".filenum").bind('change', function() {
+		$movedom = $(this).parents('.file-preview-thumbnails');
+		var newfilenum = $(this).val();
+		$('.file-preview-img').each(function(index, e) {
+			if (parseInt($(this).parents('.file-preview-thumbnails').find('img').attr('filenum')) > parseInt(newfilenum)) {
+				$movedom.hide();
+				$(this).parents('.file-preview-thumbnails').before($movedom);
+				$movedom.fadeIn();
+				return false
+			} else if (index == $('.file-preview-img').length - 1) {
+				$movedom.hide();
+				$(this).parents('.file-preview-thumbnails').after($movedom).focus();
+				$movedom.fadeIn();
+				return false
+			}
+		});
+		$('.file-preview-thumbnails').each(function(index, e) {
+			$(this).find('.file-preview-img').attr('filenum', index + 1);
+			$(this).find('.filenum').val(index + 1);
+		});
+	});
+
+	$(".fileinput-remove").unbind("click");
+	$('.fileinput-remove').bind('click', function() {
+		layer.confirm('是否确认清空图片？', {
+			skin: 'del_all',
+			btn: ['取消', '确定'], //按钮
+			title: '提示',
+			closeBtn: 2,
+		}, function(index) {
+			layer.close(index);
+		}, function() {
+			$('.file-drop-zone').find('.file-preview-thumbnails').remove();
+		});
+		// var r=confirm("是否确认清空图片！");
+		// if(r==true){
+		// 	$('.file-drop-zone').find('.file-preview-thumbnails').remove();
+		// }
+		cheakfile();
+	});
+
+	$(".file-remove-one").unbind("click");
+	$('.file-remove-one').bind('click', function() {
+		var r = confirm("是否确认删除此素材！");
+		if (r == true) {
+			$(this).parents('.file-preview-thumbnails').remove();
+		}
+		cheakfile();
+	});
+
+	$(".filedisposal").unbind("change");
+	$('.filedisposal').bind('change', function() {
+		$(this).parents('.file-preview-thumbnails').find('img').attr('disposal', $(this).children('option:selected').val());
+	});
+	$(".watermarkSetContentList").on('click', function() {
+		var e = this;
+		console.log($(e).data().id)
+		$('.watermarkSetContentList').removeClass('watermarkSetContentBtnActive')
+		$(e).addClass('watermarkSetContentBtnActive')
+
+		$.ajax({
+			url: 'https://www.gif.cn/index/istype',
+			type: 'get',
+			cache: false,
+			success: function(data) {
+				console.log(data.type)
+				if (data.type == 0 || data.type == 1) {
+					vipwatermark = false;
+					if ($(e).data().id === 2) {
+						$('.watermarkVip-hint').show()
+					} else {
+						$('.watermarkVip-hint').hide()
+					}
+				}else{
+					if ($(e).data().id === 2) {
+						vipwatermark =true;
+					} else {
+						vipwatermark = false;
+					}
+				}
+			}
+		})
+	})
+
+	$("#makegifbutton").unbind("click");
+	$('#makegifbutton').bind('click', function() {
+		// var giftext = $('#giftext').val();
+		var giftext;
+		$.ajax({
+			url: 'https://www.gif.cn/index/istype',
+			type: 'get',
+			cache: false,
+			async: false,
+			success: function(data) {
+				if (data.type == 2 || data.type == 3 || data.type == 4) {
+					giftext = ''
+				}
+				if (data.type == 0 || data.type == 1) {
+					giftext = 'GIF中文网'
+				}
+			}
+		})
+		console.log(giftext)
+		$.ajax({
+			url: '/Index/isCookie',
+			type: 'get',
+			cache: false,
+			success: function(data) {
+				if (data.code == 1) {
+					$('#cookie').val(data.msg);
+				}
+			}
+		})
+		user_id = $('.user_uid').val();
+		if (user_id) {
+			cookie = user_id;
+		}
+		if (cookie == -1 && giftext == '') {
+			layui.use('layer', function() {
+				var layer = layui.layer;
+				_log = layer.open({
+					skin: 'logmethods',
+					title: false,
+					type: 2,
+					closeBtn: 0,
+					shade: 0.7,
+					shadeClose: true,
+					content: ['/login', 'no'],
+					area: ['522px', '463px'],
+				})
+			})
+			return;
+		}
+
+		if (framequlity == 10 && (cookie == -1 || user_id == -1)) { //会员的图片质量才能是10
+			alertMessage('升级会员才能设置图片最高质量哦！');
+			return;
+		}
+		giforder = 1;
+		$('#makinginfo').show();
+		$('#makinginfo').html('开始加载素材库图片...');
+		var filearray = [];
+		var gifwidth = $('#gifwidth').val();
+		var gifheight = $('#gifheight').val();
+		var filecount = $('.file-preview-img').length; //要整理的素材总数
+		var filepush = 0; //已处理素材数;
+		var filepusherror = 0; //处理错误的素材数
+		$('.file-preview-img').each(function(index) {
+			var domthis = $(this);
+			if ($(this).attr('filetype') == "image") {
+				//filearray.push({filenum:$(this).attr('filenum'),filetype:$(this).attr('filetype'),filedelay:$(this).attr('filedelay'),filesrc:$(this).attr('src')});
+				$('#workerback').append('<img class="file-to-gif" id="' + $(this).attr('filenum') + '" delay="' + $(this).attr(
+					'filedelay') + '" disposal="' + $(this).attr('disposal') + '" src="' + $(this).attr('src') + '">');
+				filepush = filepush + 1;
+				$('#makinginfo').html('正在处理素材...' + ((filepush + filepusherror) / filecount) * 100 + '%');
+				if ((filepush + filepusherror) == filecount) {
+					window.setTimeout(function() {
+						makegif(filecount);
+					}, 100);
+				}
+			} else if ($(this).attr('filetype') == "gif") { //GIF开始剥离成多个图片
+				var ex = new Exploder($(this).attr('src'));
+				ex.load();
+				ex.onload = function(f) {
+					//console.log(f);
+					for (var i = 0; i < f.length; i++) {
+
+						var tmpindex = 1 - ((f.length - i) / (f.length + 1));
+						tmpindex = tmpindex + parseFloat(domthis.attr('filenum'));
+						var imgdelay = f[i].delay + '0';
+						var giffirst = 0;
+						if (i == f.length - 1 && index != filecount - 1 || f.length < 2) {
+							//console.log('最后一帧'+domthis.attr('filedelay'));
+							imgdelay = domthis.attr('filedelay');
+						}
+						if (i == 0) {
+							giffirst = 1;
+						}
+						var disposal = domthis.attr('disposal');
+						var imgsrc = domthis.attr('src');
+						if (f.length > 1) {
+							disposal = f[i].disposal;
+							imgsrc = f[i].url
+						}
+						$('#workerback').append('<img class="file-to-gif" id="' + tmpindex + '" delay="' + imgdelay + '" disposal="' +
+							disposal + '" first="' + giffirst + '" src="' + imgsrc + '">');
+					}
+					filepush = filepush + 1;
+					$('#makinginfo').html('正在处理素材...' + ((filepush + filepusherror) / filecount) * 100 + '%');
+					if ((filepush + filepusherror) == filecount) {
+						//makegif(filearray);
+						window.setTimeout(function() {
+							makegif(filecount);
+						}, 100);
+					}
+				}
+				ex.onerror = function(e) {
+					filepusherror = filepusherror + 1;
+					$('#makinginfo').html('正在处理素材...' + ((filepush + filepusherror) / filecount) * 100 + '%');
+					$('#workerback').append('<img class="file-to-gif" id="' + domthis.attr('filenum') + '" delay="' + domthis.attr(
+						'filedelay') + '" disposal="' + domthis.attr('disposal') + '" src="' + domthis.attr('src') + '">');
+					if ((filepush + filepusherror) == filecount) {
+						window.setTimeout(function() {
+							makegif(filecount);
+						}, 100);
+					}
+				}
+			}
+		});
+	});
+
+	$("#dmakegifbutton").unbind("click");
+	$('#dmakegifbutton').bind('click', function() {
+		var giftext = $('#giftext').val();
+
+		if (cookie == -1 && giftext == '') {
+			layui.use('layer', function() {
+				var layer = layui.layer;
+				_log = layer.open({
+					skin: 'logmethods',
+					title: false,
+					type: 2,
+					closeBtn: 0,
+					shade: 0.7,
+					shadeClose: true,
+					content: ['/login', 'no'],
+					area: ['522px', '463px'],
+				})
+			})
+			return;
+		}
+		if (framequlity == 10 && (cookie == -1 || user_id == -1)) { //会员的图片质量才能是10
+			alertMessage('升级会员才能设置图片最高质量哦！');
+			return;
+		}
+		giforder = 0;
+		$('#makinginfo').show();
+		$('#makinginfo').html('开始加载素材库图片...');
+		var filearray = [];
+		var gifwidth = $('#gifwidth').val();
+		var gifheight = $('#gifheight').val();
+		var filecount = $('.file-preview-img').length; //要整理的素材总数
+		var filepush = 0; //已处理素材数;
+		var filepusherror = 0; //处理错误的素材数
+		$('.file-preview-img').each(function(index) {
+			var domthis = $(this);
+			if ($(this).attr('filetype') == "image") {
+				//filearray.push({filenum:$(this).attr('filenum'),filetype:$(this).attr('filetype'),filedelay:$(this).attr('filedelay'),filesrc:$(this).attr('src')});
+				$('#workerback').append('<img class="file-to-gif" id="' + $(this).attr('filenum') + '" delay="' + $(this).attr(
+					'filedelay') + '" disposal="' + $(this).attr('disposal') + '" src="' + $(this).attr('src') + '">');
+				filepush = filepush + 1;
+				$('#makinginfo').html('正在处理素材...' + ((filepush + filepusherror) / filecount) * 100 + '%');
+				if ((filepush + filepusherror) == filecount) {
+					window.setTimeout(function() {
+						makegif(filecount);
+					}, 100);
+				}
+			} else if ($(this).attr('filetype') == "gif") { //GIF开始剥离成多个图片
+				var ex = new Exploder($(this).attr('src'));
+				ex.load();
+				ex.onload = function(f) {
+					//console.log(f);
+					for (var i = 0; i < f.length; i++) {
+
+						var tmpindex = 1 - ((f.length - i) / (f.length + 1));
+						tmpindex = tmpindex + parseFloat(domthis.attr('filenum'));
+						var imgdelay = f[i].delay + '0';
+						var giffirst = 0;
+						if (i == f.length - 1 && index != filecount - 1 || f.length < 2) {
+							//console.log('最后一帧'+domthis.attr('filedelay'));
+							imgdelay = domthis.attr('filedelay');
+						}
+						if (i == 0) {
+							giffirst = 1;
+						}
+						var disposal = domthis.attr('disposal');
+						var imgsrc = domthis.attr('src');
+						if (f.length > 1) {
+							disposal = f[i].disposal;
+							imgsrc = f[i].url
+						}
+						$('#workerback').append('<img class="file-to-gif" id="' + tmpindex + '" delay="' + imgdelay + '" disposal="' +
+							disposal + '" first="' + giffirst + '" src="' + imgsrc + '">');
+					}
+					filepush = filepush + 1;
+					$('#makinginfo').html('正在处理素材...' + ((filepush + filepusherror) / filecount) * 100 + '%');
+					if ((filepush + filepusherror) == filecount) {
+						//makegif(filearray);
+						window.setTimeout(function() {
+							makegif(filecount);
+						}, 100);
+					}
+				}
+				ex.onerror = function(e) {
+					filepusherror = filepusherror + 1;
+					$('#makinginfo').html('正在处理素材...' + ((filepush + filepusherror) / filecount) * 100 + '%');
+					$('#workerback').append('<img class="file-to-gif" id="' + domthis.attr('filenum') + '" delay="' + domthis.attr(
+						'filedelay') + '" disposal="' + domthis.attr('disposal') + '" src="' + domthis.attr('src') + '">');
+					if ((filepush + filepusherror) == filecount) {
+						window.setTimeout(function() {
+							makegif(filecount);
+						}, 100);
+					}
+				}
+			}
+		});
+	});
+}
+function watermarkcloseFn(e) {
+	$('.watermarkVip-hint').hide()
+}
+cheakfile();
+addevent();
+//界面处理完成
+//弹出框开始
+//事件处理开始
+function imagetype(filepath) {
+	//为了避免转义反斜杠出问题，这里将对其进行转换
+	var re = /(\\+)/g;
+	var filename = filepath.replace(re, "#");
+	//对路径字符串进行剪切截取
+	var one = filename.split("#");
+	//获取数组中最后一个，即文件名
+	var two = one[one.length - 1];
+	//再对文件名进行截取，以取得后缀名
+	var three = two.split(".");
+	//获取截取的最后一个字符串，即为后缀名
+	var last = three[three.length - 1];
+	//添加需要判断的后缀名类型
+	var tp = "bmp,jpg,png,tiff,gif,pcx,tga,exif,fpx,svg,psd,cdr,pcd,dxf,ufo,eps,ai,raw,jepg,jpeg,ico";
+	var md = "gif";
+	var vd = "mp4,webm,ogg,ogv,mkv,mov,rmvb,avi,3gp";
+	var fd = "swf";
+	//返回符合条件的后缀名在字符串中的位置
+	var trs = tp.indexOf(last.toLowerCase());
+	var mrs = md.indexOf(last.toLowerCase());
+	var vrs = vd.indexOf(last.toLowerCase());
+	var frs = fd.indexOf(last.toLowerCase());
+	//如果返回的结果大于或等于0，说明包含允许上传的文件类型
+	if (trs >= 0) {
+		return 'image';
+	} else if (mrs >= 0) {
+		return 'gif';
+	} else if (vrs >= 0) {
+		return 'video';
+	} else if (frs >= 0) {
+		return 'flash';
+	} else {
+		return false;
+	}
+}
+
+function likecolor(r, g, b, r1, b1, g1) {
+	var dr = r - r1;
+	var dg = g - b1;
+	var db = b - g1;
+	var d = Math.sqrt(dr * dr + dg * dg + db * db);
+	return d;
+}
+
+function getgif(filecount) {
+	$('#makinginfo').html('图片裁剪完成，正处理各帧...');
+	var gifwidth = parseInt($('#gifwidth').val());
+	var gifheight = parseInt($('#gifheight').val());
+	var images = new Array();
+	var disposals = new Array();
+	var delays = new Array();
+	var alphas = new Array();
+	
+	if (giforder == 1) {
+		$('.file-preview-thumbnails').remove();
+	} else {
+		$('.file-to-gif').remove();
+		var daoxu = $('.canvas-to-gif');
+		$('.canvas-to-gif').remove();
+		daoxu.each(function(index, e) {
+			$('#workerback').prepend($(this));
+		});
+	}
+
+	$('.canvas-to-gif').each(function(index, e) {
+		var dom, domimg, delay, disposal;
+		dom = $(this)[0];
+		domimg = $(this).prev("img");
+		delay = parseInt($(this).attr('delay'));
+		disposal = parseInt($(this).attr('disposal'));
+
+		if (delay < 15) {
+			delay = 100;
+		}
+		ogiftime = ogiftime + parseInt($(this).attr('delay'));
+		if (giforder == 1) {
+			disposalsel = '';
+			// var disposalsel = '<option value="0">独立</option>' + '<option value="1">置放</option>';
+
+			// if (domimg.attr('disposal') == '1') {
+			// 	disposalsel = '<option value="1">置放</option>' + '<option value="0">独立</option>';
+			// }
+			var filenum = $('.file-drop-zone').find('.file-preview-thumbnails').length + 1;
+			var filehtml = '<div class="file-preview-thumbnails">' +
+				'  <div class="file-preview-frame" data-fileindex="0">' +
+				'    <img class="file-preview-img" filetype="image" filenum="' + filenum + '" filedelay="' + delay +
+				'" disposal="' + domimg.attr('disposal') + '" src="' + domimg.attr('src') +
+				'" class="file-preview-image" title="' + filenum + '" alt="' + filenum + '" style="height:' + gif_vheight +
+				'px;">' +
+				'    <div class="file-thumbnail-footer">' +
+				'      <div class="file-actions">' +
+				'        <div class="file-footer-buttons">' +
+				'            <div class="input-group input-group-sm">' +
+				'	 			<span class="input-group-addon">序号</span>' +
+				'    			<input type="text" class="form-control filenum" aria-describedby="basic-addon1" value="' + filenum +
+				'" style="width:50px;">' +
+				'				<span class="input-group-addon">延迟</span>' +
+				'	 			<input type="text" class="form-control filedelay" aria-describedby="basic-addon1" value="' + delay +
+				'" style="width:50px;">' +
+				'		  	  </div>' +
+				'            <div class="input-group input-group-sm">' +
+				'				<span class="input-group-addon file-remove-one"> <img src="/public/static/img/gif/new_del.png" title="删除此图片" width="15px"> </span>' +
+				'		      </div>' +
+				'         </div>' +
+				'       </div>' +
+				'     </div>' +
+				'   </div>' +
+				' </div>';
+			$('#file-drop-zone-clearfix').before(filehtml);
+			$(".img_file_add_Btn").height(gif_vheight+40)
+			$(".file-preview-img").height(gif_vheight)
+		}
+	});
+	var giftime = 0;
+	var mindelay = 120;
+	var oframes = $('.canvas-to-gif').length;
+	var ogiftime = 0;
+	var deletedom = new Array();
+	var deleteframecount;
+	if ($("#delframes").is(':checked')) {
+		//开始压缩，删除小间隔帧
+		if (ogiftime < (oframes * mindelay)) { //平均小于100ms;开始删除
+			//要删除掉总的时间
+			var deletetime = oframes * mindelay - ogiftime;
+			//删除最小间隔的帧,直到平均大于100ms;且删除的帧间隔不能小于
+			deleteframecount = 1 / ((mindelay - (ogiftime / oframes)) / mindelay);
+			if (deleteframecount < 2) deleteframecount = 2; //最小要间隔2帧
+			$('.canvas-to-gif').each(function(index, e) {
+				var idelay = parseInt($(this).attr('delay'));
+				if (idelay < mindelay) {
+					deletedom.push({
+						dom: $(this),
+						domimg: $(this).prev("img"),
+						index: index
+					});
+				}
+			});
+		}
+		var lastindex = 0;
+		var lastdeletedelay = 0;
+		var delalltime = 0;
+		for (x in deletedom) {
+			if ((deletedom[x].dom.attr('delay') < mindelay) && (deletedom[x].index - lastindex) > deleteframecount) { //符合条件的删除
+				//console.log((deletedom[x].index-lastindex)+' '+deleteframecount);
+				lastindex = deletedom[x].index;
+				delalltime = delalltime + parseInt(deletedom[x].dom.attr('delay'));
+				deletedom[x].dom.remove();
+				deletedom[x].domimg.remove();
+			}
+		}
+		$('.canvas-to-gif').each(function(index, e) { //把删除的总时间平均分配给每帧
+			var newdelay = parseInt($(this).attr('delay')) + parseInt(Math.round((delalltime / $('.canvas-to-gif').length) /
+				10) * 10);
+			//console.log(delalltime/$('.canvas-to-gif').length+' '+delalltime + ' '+ parseInt( Math.round( (delalltime/$('.canvas-to-gif').length)/10 )*10 ));
+			$(this).attr('delay', newdelay);
+		});
+		//压缩完成
+	}
+	var gifframe = $('.canvas-to-gif').length;
+	var text, is_vip = false;
+	$.ajax({
+		url: 'https://www.gif.cn/index/istype',
+		type: 'get',
+		cache: false,
+		async: false,
+		success: function(data) {
+			if (data.type == 2 || data.type == 3 || data.type == 4) {
+				is_vip = true;
+				textsy = $('.watermarkSetContentBtnActive').text()
+				if (textsy == '无水印') {
+					text = ''
+
+				} else {
+					text = 'GIF中文网'
+				}
+			}
+			if (data.type == 0 || data.type == 1) {
+				text = 'GIF中文网'
+			}
+		}
+	})
+	$('.canvas-to-gif').each(function(index, e) {
+		var gifwidth = parseInt($('#gifwidth').val());
+		var gifheight = parseInt($('#gifheight').val());
+		var dom, domimg, delay, disposal;
+		var $dom = $(this);
+		dom = $(this)[0];
+		domimg = $(this).prev("img");
+		delay = parseInt($(this).attr('delay'));
+		disposal = parseInt($(this).attr('disposal'));
+
+		if (delay < 15) {
+			delay = 100;
+		}
+		giftime = giftime + delay;
+		var ctx = dom.getContext("2d");
+		//开始水印
+		var canvas = dom;
+		
+		// var text = $('#giftext').val();
+		if(makeRation){
+			var ratio = getPixelRatio(ctx)
+			gifwidth = gifwidth * ratio;
+			gifheight = gifheight * ratio;
+		}
+		
+		//判断水印点击是否去掉水印
+		textsy = $('.watermarkSetContentBtnActive').text()
+
+		console.log($('.watermarkSetContentBtnActive').text());
+		console.log(text)
+		// 屏蔽添加水印
+		// 2022-05-23 cui
+		text = ''
+		// if ((text != "" && text != "gif.cn") || text == "gif.cn" && (gifwidth > 100 && gifheight > 100)) {
+		if ((text != "" && text != "GIF中文网") || text == "GIF中文网") {
+			// var postWtype = $('#postWtype').children('option:selected').val();
+			// var postHtype = $('#postHtype').children('option:selected').val();
+			var postWtype = 'center';
+			var postHtype = 'middel';
+			var postW = 0;
+			var postH = 0;
+			var postWW = 0;
+			var postHH = 0;
+			var fontpx = parseInt(Math.min(gifwidth, gifheight) * 20 / 300);
+			if (fontpx % 2 == 1) {
+				fontpx = fontpx + 1;
+			}
+			if (fontpx < 10) {
+				fontpx = 12; //最少10px
+			}
+			if (fontpx > 20) {
+				fontpx = 20; //最大10px
+			}
+			ctx.font = 'bold ' + fontpx + "px Verdana";
+			var textwidth = ctx.measureText(text).width;
+			ctx.textAlign = postWtype; //文本水平对齐方式
+			ctx.textBaseline = postHtype; //文本垂直方向，基线位置
+			if (postWtype == "right") {
+				postW = canvas.width - 10;
+				postWW = canvas.width - (textwidth + 20);
+			} else if (postWtype == "center") {
+				postW = canvas.width / 2;
+				postWW = canvas.width / 2 - (textwidth + 20) / 2;
+			} else if (postWtype == "left") {
+				postW = 10;
+				postWW = 0
+			}
+			if (postHtype == "bottom") {
+				postH = canvas.height - 5;
+				postHH = canvas.height - (fontpx + 10);
+			} else if (postHtype == "middel") {
+				postH = canvas.height / 2;
+				postHH = canvas.height / 2 - (fontpx + 20) / 2;
+			} else if (postHtype == "top") {
+				postH = 3;
+				postHH = 0;
+			}
+			ctx.globalAlpha = 0.5;
+			// ctx.fillStyle = '#020202';
+			ctx.fillStyle = 'transparent';
+			if (gifwidth > 100) {
+				ctx.fillRect(postWW, postHH, 115, 25);
+				console.log('宽度大于100')
+			}
+			if (gifwidth <= 100) {
+				ctx.fillRect(postWW, postHH, textwidth + 55, fontpx + 10);
+				console.log('宽度小于100')
+			}
+			//ctx.font=+"bold "+fontpx+"px Arial";
+			// ctx.globalAlpha = 1;
+			// ctx.fillStyle = '#f9f9f9';
+			// ctx.fillText(text, postW, postH);
+			if (gifwidth < 350) {
+				if (gifheight < 200) {
+					newidth = (gifwidth - gifwidth / 4) / 2;
+					neheight = (gifheight - gifheight / 4) / 2;
+					var eleImgCover = document.getElementById('imgCover');
+					ctx.drawImage(eleImgCover, newidth, neheight, gifwidth / 4, gifheight / 4);
+				} else if (gifheight >= 200 && gifheight < 1280) {
+					newidth = (gifwidth - gifwidth / 4) / 2;
+					neheight = (gifheight - 49) / 2;
+					var eleImgCover = document.getElementById('imgCover');
+					ctx.drawImage(eleImgCover, newidth, neheight, gifwidth / 4, 49);
+				} else if (gifheight >= 1280) {
+					newidth = (gifwidth - gifwidth / 4) / 2;
+					neheight = (gifheight - 98) / 2;
+					var eleImgCover = document.getElementById('imgCover');
+					ctx.drawImage(eleImgCover, newidth, neheight, gifwidth / 4, 98);
+				}
+
+			} else if (gifwidth >= 350 && gifwidth < 1280) {
+				if (gifheight < 200) {
+					newidth = (gifwidth - 200) / 2;
+					neheight = (gifheight - gifheight / 4) / 2;
+					var eleImgCover = document.getElementById('imgCover');
+					ctx.drawImage(eleImgCover, newidth, neheight, 200, gifheight / 4);
+				} else if (gifheight >= 200 && gifheight < 1280) {
+					newidth = (gifwidth - 200) / 2;
+					neheight = (gifheight - 49) / 2;
+					var eleImgCover = document.getElementById('imgCover');
+					ctx.drawImage(eleImgCover, newidth, neheight, 200, 49);
+				} else if (gifheight >= 1280) {
+					newidth = (gifwidth - 200) / 2;
+					neheight = (gifheight - 98) / 2;
+					var eleImgCover = document.getElementById('imgCover');
+					ctx.drawImage(eleImgCover, newidth, neheight, 200, 98);
+				}
+			} else if (gifwidth >= 1280) {
+				if (gifheight < 200) {
+					newidth = (gifwidth - 400) / 2;
+					neheight = (gifheight - gifheight / 4) / 2;
+					var eleImgCover = document.getElementById('imgCover');
+					ctx.drawImage(eleImgCover, newidth, neheight, 400, gifheight / 4);
+				} else if (gifheight >= 200 && gifheight < 1280) {
+					newidth = (gifwidth - 400) / 2;
+					neheight = (gifheight - 49) / 2;
+					var eleImgCover = document.getElementById('imgCover');
+					ctx.drawImage(eleImgCover, newidth, neheight, 400, 49);
+				} else if (gifheight >= 1280) {
+					newidth = (gifwidth - 400) / 2;
+					neheight = (gifheight - 98) / 2;
+					var eleImgCover = document.getElementById('imgCover');
+					ctx.drawImage(eleImgCover, newidth, neheight, 400, 98);
+				}
+			}
+
+		}
+		//水印结束
+
+		// 新版水印 cui
+		if (is_vip===false) {
+			let coverW = 120, coverH = 120, coverX = 0, coverY = 0;
+			if (gifwidth >= 240 && gifheight >= 240) {
+				// 左上
+				let eleImgCover = document.getElementById('imgCover');
+				coverX = (gifwidth / 3 - coverW) / 2, coverY = (gifheight / 3 - coverH) / 2;
+				ctx.drawImage(eleImgCover, coverX, coverY, coverW, coverH);
+				// 居中
+				coverX = (gifwidth - coverW) / 2, coverY = (gifheight - coverH) / 2;
+				ctx.drawImage(eleImgCover, coverX, coverY, coverW, coverH);
+				// 右下
+				coverX = gifwidth / 3 * 2 + (gifwidth / 3 - coverW) / 2, coverY = gifheight / 3 * 2 + (gifheight / 3 - coverH) / 2;
+				ctx.drawImage(eleImgCover, coverX, coverY, coverW, coverH);
+			} else {
+				let coverX = (gifwidth - coverW) / 2,
+					coverY = (gifheight - coverH) / 2,
+					eleImgCover = document.getElementById('imgCover');
+				ctx.drawImage(eleImgCover, coverX, coverY, coverW, coverH);
+			}
+		}
+
+
+		//判断是否有透明色 和删除重复数据
+		var imgdata = ctx.getImageData(0, 0, gifwidth, gifheight);
+		var havealpha = false;
+
+		for (var i = 0; i < imgdata.data.length; i += 4) {
+			if (imgdata.data[i + 3] == 0) {
+				havealpha = true;
+				break;
+			}
+		}
+
+		if (havealpha == false) { //变为独立
+			disposal = 0;
+		} else if (havealpha == true) { //变为独立
+			disposal = 9;
+		}
+
+		var $canvas2 = $('<canvas></canvas>');
+		var canvas2 = $canvas2[0];
+		var ctx2 = canvas2.getContext("2d");
+		canvas2.width = gifwidth;
+		canvas2.height = gifheight;
+		ctx2.putImageData(imgdata, 0, 0);
+
+		if ($("#delpixs").is(':checked')) {
+			//开始删除重复像素
+			var havealpha2 = false;
+			var imgdata = ctx.getImageData(0, 0, gifwidth, gifheight);
+			var prevcanvas, prevcanvasctx, pimgdata;
+			var $prevcanvas;
+			if (giforder == 1) {
+				$prevcanvas = domimg.prev(".canvas-to-gif"); //上一张图片的上一张
+			} else {
+				$prevcanvas = $dom.prev(".canvas-to-gif"); //上一张图片的上一张
+			}
+			if ($prevcanvas.length > 0) {
+				prevcanvas = $prevcanvas[0];
+				prevcanvasctx = prevcanvas.getContext("2d");
+				pimgdata = prevcanvasctx.getImageData(0, 0, gifwidth, gifheight);
+			}
+
+			if ($prevcanvas.length > 0) {
+				//判断是否有透明色 和删除重复数据
+				var xsxsnum = 0;
+				for (var i = 0; i < imgdata.data.length; i += 4) {
+					if (imgdata.data[i + 3] == 0 && pimgdata.data[i + 3] != 0) {
+						havealpha2 = false;
+						break;
+					}
+					if (imgdata.data[i] == pimgdata.data[i] && imgdata.data[i + 1] == pimgdata.data[i + 1] && imgdata.data[i + 2] ==
+						pimgdata.data[i + 2] && imgdata.data[i + 3] == pimgdata.data[i + 3] && imgdata.data[i + 3] == 255) {
+						imgdata.data[i] = 255;
+						imgdata.data[i + 1] = 255;
+						imgdata.data[i + 2] = 255;
+						imgdata.data[i + 3] = 0;
+						havealpha2 = true;
+						xsxsnum = xsxsnum + 1;
+					}
+				}
+				if (havealpha2) { //&& xsxsnum/(imgdata.data.length/4) >0.03
+					if (disposals[disposals.length - 1] != 1 && disposals[disposals.length - 1] != 3) {
+						disposals[disposals.length - 1] = 3;
+						disposal = 9;
+					} else {
+						disposal = 1;
+					}
+					ctx2.putImageData(imgdata, 0, 0);
+				}
+			}
+		}
+
+		var havedata = true;
+		if (disposal == 1) {
+			var mimgdata = ctx2.getImageData(0, 0, gifwidth, gifheight);
+			havedata = false; //删除空白图片
+			for (var i = 0; i < mimgdata.data.length; i += 4) {
+				if (mimgdata.data[i + 3] != 0) {
+					havedata = true;
+					break;
+				}
+			}
+		}
+
+		//var $canvas2 = $('<canvas></canvas>');
+		//var canvas2 = $canvas2[0];
+		//var ctx2 = canvas2.getContext("2d");
+		//canvas2.width=gifwidth;
+		//canvas2.height=gifheight;
+		//ctx2.putImageData(imgdata,0,0);
+		$('#yasuo').append($canvas2);
+		if (havedata) {
+			alphas.push(havealpha);
+			images.push(canvas2);
+			disposals.push(parseInt(disposal))
+			delays.push(parseInt(delay / 10));
+		} else { //把时间放给上一帧
+			delays[delays.length - 1] = delays[delays.length - 1] + parseInt(delay / 10);
+		}
+	});
+
+	var progress = function(percent) {
+		//console.log('percent,'+percent);
+		$('#makinginfo').html('图片各帧处理完成，正在生成gif...' + (percent * 100).toFixed(0) + '%');
+	};
+
+	var progressG = function(percent) {
+		//console.log('percent,'+percent);
+		$('#makinginfo').html('正在生成全局调色板...' + (percent * 100).toFixed(0) + '%');
+	};
+
+	var done = function(info) {
+		// console.log(info)
+		var msg = '图片大小:' + gifwidth + 'x' + gifheight + '(' + bytesToSize(info.data.length) + ',' + gifframe + '帧' + ',' +
+			giftime + '毫秒)';
+
+		let url_log = 'https://www.gif.cn/index/imagezc'
+		$.ajax({
+			url: url_log,
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				base64_image: info.dataURL,
+				'type': 'gifhecheng',
+				'num': filecount,
+				'width_height':gifwidth + '*' + gifheight,
+				'size':bytesToSize(info.data.length),
+			},
+		})
+
+		showmygif(info, msg, gifframe, gifwidth, gifheight);
+		$('#workerback').empty();
+		$('#makinginfo').empty();
+		$('#makinginfo').hide();
+		makegifing = false;
+	};
+
+	var error = function(info) {
+		alert('gif生成错误，请重试！');
+		$('#workerback').empty();
+		$('#makinginfo').empty();
+		$('#makinginfo').hide();
+		makegifing = false;
+		var str = JSON.stringify(info);
+		alert(str);
+	};
+
+	var gloabpalette = true;
+	if ($("#gloabpalette").is(':checked')) {
+		gloabpalette = true;
+	} else {
+		gloabpalette = false;
+	}
+	if(makeRation){
+		gifheight = gifheight * 2
+		gifwidth = gifwidth * 2
+	}
+	var gif = new MFAnimatedGIF({
+		images: images,
+		rotations: [0],
+		disposal: disposals,
+		delay: delays,
+		alpha: alphas,
+		quality: 1,
+		repeat: 0,
+		height: gifheight,
+		width: gifwidth,
+		progress: progress,
+		progressG: progressG,
+		gloabpalette: gloabpalette,
+		error: error,
+		done: done
+	});
+	cheakfile();
+	addevent();
+}
+
+function renewgif() {
+	var gifwidth = parseInt($('#gifwidth').val());
+	var gifheight = parseInt($('#gifheight').val());
+	var imgloaded = 0;
+	$('.canvas-to-gif').each(function(index, e) { //修正图片
+		dom = $(this)[0];
+		var ctx = dom.getContext("2d");
+		var imgbs64data = dom.toDataURL("image/jpg", 1);
+		var img = new Image();
+		img.src = imgbs64data;
+		img.onload = function() //确保图片已经加载完毕
+		{
+			imgloaded = imgloaded + 1;
+			ctx.clearRect(0, 0, dom.width, dom.height);
+			ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, gifwidth, gifheight);
+			if (index == ($('.file-to-gif').length - 1)) {
+				window.setTimeout(function() {
+					getgif();
+				}, 200);
+			}
+		}
+		img.onerror = function() {
+			imgloaded = imgloaded + 1;
+			if (index == ($('.file-to-gif').length - 1)) {
+				window.setTimeout(function() {
+					getgif();
+				}, 200);
+			}
+		};
+	});
+}
+
+function getPixelRatio(context) {
+	const backingStore =
+	context.backingStorePixelRatio ||
+	context.webkitBackingStorePixelRatio ||
+	context.mozBackingStorePixelRatio ||
+	context.msBackingStorePixelRatio ||
+	context.oBackingStorePixelRatio ||
+	context.backingStorePixelRatio || 1
+	return (window.devicePixelRatio || 1) / backingStore
+}
+
+var makegifing = false;
+var makeRation = false;
+function makegif(filecount) { //filearray filenum,filetype,filedelay,filesrc
+
+	if (makegifing) return false;
+	makegifing = true;
+	var gifwidth = parseInt($('#gifwidth').val());
+	var gifheight = parseInt($('#gifheight').val());
+	
+	var asc = function(a, b) {
+		return parseFloat($(a).attr('id')) > parseFloat($(b).attr('id')) ? 1 : -1;
+	}
+
+	var desc = function(a, b) {
+		return parseFloat($(a).attr('id')) > parseFloat($(b).attr('id')) ? -1 : 1;
+	}
+
+	var sortByImgid = function(sortBy) {
+		var sortEle = $('#workerback>img').sort(sortBy);
+		$('#workerback').empty().append(sortEle);
+	}
+
+	sortByImgid(asc);
+	var imgloaded = 0;
+	$('#makinginfo').html('图片素材处理完成，开始裁剪图片...');
+	$('.file-to-gif').each(function(index, element) {
+		//var img=$(this)[0];
+		var gifwidth = parseInt($('#gifwidth').val());
+		var gifheight = parseInt($('#gifheight').val());
+
+		var img = new Image()
+		var imgdom = $(this);
+		img.src = $(this).attr('src');
+		img.onload = function() //确保图片已经加载完毕
+		{
+			//console.log('src:'+img.width+','+img.height+'des:'+gifwidth+','+gifheight);
+			//console.log('src:'+img.width+','+img.height+'des:'+gifwidth+','+gifheight);
+			var disposal = imgdom.attr('disposal');
+			var $canvas = $('<canvas class="canvas-to-gif" delay="' + imgdom.attr('delay') + '" disposal="' + imgdom.attr(
+				'disposal') + '"></canvas>');
+			var canvas = $canvas[0];
+			var ctx = canvas.getContext("2d");
+			if(makeRation){
+				var ratio = getPixelRatio(ctx)
+				gifwidth = gifwidth * ratio;
+				gifheight = gifheight * ratio;
+			}
+			canvas.width = gifwidth;
+			canvas.height = gifheight;
+			//ctx.fillStyle='#FFFFFF';
+			//ctx.fillRect(0, 0,gifwidth, gifheight);
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			var $prevcanvas = imgdom.prev("canvas"); //上一张图片
+
+			if (disposal == 1 && $prevcanvas.length > 0) { //修复 将上一张图片置为底和当前图片叠加
+				var prevcanvas = $prevcanvas[0];
+				var prevcanvasctx = prevcanvas.getContext("2d");
+				var previmgData = prevcanvasctx.getImageData(0, 0, gifwidth, gifheight);
+				ctx.putImageData(previmgData, 0, 0);
+				//$canvas.attr('disposal','0');
+				//imgdom.attr('disposal','0');
+			}
+			ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, gifwidth, gifheight);
+			
+			//开始单帧压缩
+			if (framequlity != 10) {
+				var req = parseInt(framequlity * 4 - 4);
+				if (req == 0) {
+					req = 2;
+				}
+				var filterimg = ImageFilters.Posterize(ctx.getImageData(0, 0, gifwidth, gifheight), req);
+				ctx.putImageData(filterimg, 0, 0);
+			}
+			/*
+			 //简单修正
+			 thisimgData=ctx.getImageData(0,0,gifwidth,gifheight);
+			 for (var i=0;i<thisimgData.data.length;i+=4){
+			 if(thisimgData.data[i+3]>254 && thisimgData.data[i+3]<255){
+
+			 thisimgData.data[i+3] = 255;
+			 }else if(thisimgData.data[i+3]>0 && thisimgData.data[i+3]<254){
+
+
+			 thisimgData.data[i+3] = 0;
+
+			 }
+			 }
+			 ctx.putImageData(thisimgData,0,0);
+			 */
+			//ctx.drawImage(img,0,0,img.width,img.height,0,0,gifwidth,gifheight);
+			imgdom.after($canvas);
+			imgloaded = imgloaded + 1;
+			//判断是否加载完成
+			if (index == ($('.file-to-gif').length - 1)) {
+				window.setTimeout(function() {
+					getgif(filecount);
+				}, 1200);
+			}
+		};
+
+		img.onerror = function() {
+			imgloaded = imgloaded + 1;
+			if (index == ($('.file-to-gif').length - 1)) {
+				window.setTimeout(function() {
+					getgif(filecount);
+				}, 1200);
+			}
+		};
+	});
+}
+
+function msieVersion() {
+	var v = 3,
+		div = document.createElement('div'),
+		a = div.all || [];
+	while (div.innerHTML = '<!--[if gt IE ' + (++v) + ']><br><![endif]-->', a[0]);
+	return v > 4 ? v : !v;
+}
+
+$(document).ready(function() {
+	function msieVersion() {
+		var v = 3,
+			div = document.createElement('div'),
+			a = div.all || [];
+		while (div.innerHTML = '<!--[if gt IE ' + (++v) + ']><br><![endif]-->', a[0]);
+		return v > 4 ? v : !v;
+	}
+	if (msieVersion() < 10 && msieVersion() != false) {
+		$('div').hide();
+		$('#showbox,#gifhelp,.media').show();
+		layer.open({
+			type: 1, //page层
+			area: ['80%', '80%'],
+			title: '重要提示',
+			skin: 'layui-layer-lan', //墨绿风格
+			shade: 0.6, //遮罩透明度
+			shift: -1, //0-6的动画形式，-1不开启
+			content: '<div align="center" style="padding:18px;">' +
+				'    <h3>为更好使用本站功能，请使用以下浏览器最新版本访问本站：</h3>' +
+				'	  <div style="width:70%;min-width:320px;" ><ul style="list-style:none;">' +
+				'<li style=" float:left;width:80px;"><a href="http://rj.baidu.com/soft/detail/14744.html?ald" target="_blank"><img src="./images/br/chrome.png"><br>chrome</a></li>' +
+				'<li style=" float:left;width:80px;"><a href="http://rj.baidu.com/soft/detail/11843.html?ald" target="_blank"><img src="./images/br/firefox.png"><br>firefox</a></li>' +
+				'<li style=" float:left;width:80px;"><a href="http://rj.baidu.com/soft/detail/11339.html?ald" target="_blank"><img src="./images/br/baidu.png"><br>百度浏览器</a></li>' +
+				'<li style=" float:left;width:80px;"><a href="http://rj.baidu.com/soft/detail/17451.html" target="_blank"><img src="./images/br/360.png"><br>360浏览器</a></li>' +
+				'<li style=" float:left;width:80px;"><a href="http://rj.baidu.com/soft/detail/16490.html" target="_blank"><img src="./images/br/qq.png"><br>QQ浏览器</a></li>' +
+				'<li style=" float:left;width:80px;"><a href="http://rj.baidu.com/soft/detail/11508.html" target="_blank"><img src="./images/br/oprea.png"><br>Opera</a></li>' +
+				'<li style=" float:left;width:80px;"><a href="http://rj.baidu.com/soft/detail/14754.html" target="_blank"><img src="./images/br/sogou.png"><br>搜狗浏览器</a></li>' +
+				'<li style=" float:left;width:80px;"><a href="http://rj.baidu.com/soft/detail/15895.html" target="_blank"><img src="./images/br/liebao.png"><br>猎豹浏览器</a></li>' +
+				'</ul></div><br><b>如果您使用的是高级浏览器访问仍看到此信息，请尝试切换为非IE浏览模式！</b></div>'
+		});
+		return false;
+	}
+	var qulityChange = function() {
+		$("#qulitytext").text(sliderbar.getValue() + '0%');
+		framequlity = sliderbar.getValue();
+		var cookie = $('#cookie').val();
+		var user_id = $('#user_id').val();
+		if (framequlity == 10 && user_id == "") { //非会员图片质量最大只能为9
+			layer.msg('会员可享受图片最高质量！');
+			sliderbar.setValue(9);
+			return;
+		}
+	};
+	var sliderbar = $("#framequlity").slider().on('change', qulityChange).data('slider');
+	layer.config({
+		extend: 'extend/layer.ext.js'
+	});
+	var buffer = new ArrayBuffer(20);
+	var result = 'slice' in buffer;
+	result = result && canvasSupport();
+	//alert(result);
+	if (!result) {
+		alertMessage('为更好体验本站功能，请使用高级浏览器。如：chrome,火狐,百度浏览器,360浏览器等!');
+	}
+	//getmoregif();
+	cheakfile();
+
+	// 首页判断上传文件类型
+	$('#file').change(function() {
+		if (!/\.(jpg|jpeg|png|JPG|PNG|gif|GIF)$/.test(this.value)) {    
+			uploadtype = 'video'
+			var buffer = new ArrayBuffer(20);
+			var result = 'slice' in buffer;
+			result = result && canvasSupport();
+			//alert(result);
+			if (!result) {
+				alertMessage('您的浏览器不支持视频转GIF，请使用高级浏览器，如：chrome,火狐,百度浏览器,360浏览器等!');
+				return false;
+			}
+			var f = document.getElementById('file').files[0];
+			var filetype = imagetype(f.name);
+			if (f && filetype == "video") {
+				//统计次数
+				$.ajax({
+						url: 'https://www.gif.cn/tools/visit_count',
+						type: 'POST',
+						dataType: 'json',
+						data: {
+							name: 'index_video'
+						},
+					})
+					.done(function() {
+						console.log("success");
+					})
+				var blob = fileurl.createObjectURL(f);
+				var gifwidth = $('#gifwidth').val();
+				var gifheight = $('#gifheight').val();
+				var content = '<div align="center" style="padding:25px 0;">' +
+					'<video id="video2gif" controls style="max-width: 100%;height: 400px;"><source src="' + blob +
+					'" ></source></video>' +
+					'<div>当前共取得:<span id="video2gifframenum">0</span>帧,时间:<span id="video2giftime">0</span>ms <a onclick="removevideoimage()")>清空</a></div>' +
+					'<div><span id="video2gifinfo"></span></div>' +
+					'<br><button onclick="getvideoimage()" type="button" class="btn btn-primary" style="background-color: #6597fe;border-color: #6597fe;border-radius: 15px;width: 106px;height: 30px;padding:0;line-height:30px;text-align:center;margin-bottom:10px">开始取图</button> ' +
+					'<button onclick="stopvideoimage()" type="button" class="btn btn-danger" style="background-color: #f27767;border-color: #f27767;border-radius: 15px;width: 106px;height: 30px;padding:0;line-height:30px;text-align:center;margin-bottom:10px">停止取图</button> ' +
+					'<button onclick="addvideoimage()" type="button" class="btn btn-success" style="background-color: #50b949;border-color: #50b949;border-radius: 15px;width: 106px;height: 30px;padding:0;line-height:30px;text-align:center;margin-bottom:10px">取图完成</button><br>' +
+					'<div style="display:none;"><canvas width="' + gifwidth + '" height="' + gifheight +
+					'" id="videocanvas"></canvas></div>' +
+					'<div id="video2gifimage" style="display:none;"></div>' +
+					'</div>';
+
+				if ($(window).width() < 1366) {
+					layer.open({
+						type: 1, //page层
+						area: ['90%', '60%'],
+						title: '视频转GIF',
+						skin: 'layui-layer-lan', //墨绿风格,
+						closeBtn: 2,
+						shade: 0.6, //遮罩透明度
+						shift: -1, //0-6的动画形式，-1不开启
+						content: content
+					});
+				} else {
+					layer.open({
+						type: 1, //page层
+						area: ['80%', '80%'],
+						title: '视频转GIF',
+						skin: 'layui-layer-lan', //墨绿风格,
+						closeBtn: 2,
+						shade: 0.6, //遮罩透明度
+						shift: -1, //0-6的动画形式，-1不开启
+						content: content,
+					});
+				}
+			} else {
+				alertMessage('请添加有效的视频!');
+			}
+			document.getElementById('file').value = null;
+			cheakfile();
+			addevent();
+			return false;    
+		}else{
+			uploadtype = 'image'
+			var result = canvasSupport();
+			if (!result) {
+				alertMessage('您的浏览器不支持，请使用高级浏览器，如：chrome,火狐,百度浏览器,360浏览器等!');
+				return false;
+			}
+			var gifwidth = $('#gifwidth').val();
+			var gifheight = $('#gifheight').val();
+			if (gifwidth && gifheight) {
+				if (gifwidth >= 2 && gifwidth <= 1920 && gifheight >= 2 && gifheight <= 1920) {
+					gif_vheight = (gifheight / gifwidth) * gif_vwidth;
+					gif_vheight = getMobileHeight(gif_vheight)
+				} else {
+					alertMessage('gif图片大小只能在2px至1920px之间');
+					$('#gifwidth').focus();
+					document.getElementById('file').value = null;
+					return false;
+				}
+			} else {
+				alertMessage('gif图片大小只能在2px至1920px之间');
+				$('#gifwidth').focus();
+				document.getElementById('file').value = null;
+				return false;
+			}
+			var fileList = document.getElementById('file').files;
+			var blob = new Array();
+			var addimgnum = 0;
+			var addimgerrorfilename = "";
+			for (var i = 0; i < fileList.length; i++) {
+				var f = fileList[i];
+				var filetype = imagetype(f.name);
+				if (f && (filetype == 'image' || filetype == 'gif')) {
+					addimgnum = addimgnum + 1;
+					blob[i] = fileurl.createObjectURL(fileList[i]);
+					var is_mobile = $('#is_mobile').val();
+					if (is_mobile == 1) { //手机端
+						content = '    <img class="file-preview-img" filetype="gif" filenum="' + i +
+							'" disposal="0" filedelay="800" src="' +
+							blob[i] + '" class="file-preview-image" title="' + f.name + '" alt="' + f.name + '" style="height:120px;">';
+					} else if (is_mobile == undefined) { //PC端
+
+
+						content = '    <img class="file-preview-img" filetype="gif" filenum="' + i +
+							'" disposal="0" filedelay="800" src="' +
+							blob[i] + '" class="file-preview-image" title="' + f.name + '" alt="' + f.name + '" style="height:' + gif_vheight +
+					'px;">';
+					$('.img_file_add_Btn').height(gif_vheight+40)
+					$(".file-preview-img").height(gif_vheight)
+					}
+					var filehtml = '<div class="file-preview-thumbnails">' +
+						'  <div class="file-preview-frame" data-fileindex="0">' +
+						content +
+						'    <div class="file-thumbnail-footer">' +
+						'      <div class="file-actions">' +
+						'        <div class="file-footer-buttons">' +
+						'            <div class="input-group input-group-sm">' +
+						'	 			<span class="input-group-addon">序号</span>' +
+						'    			<input type="text" class="form-control filenum" aria-describedby="basic-addon1" value="' + i +
+						'" style="width:50px;">' +
+						'				<span class="input-group-addon">延迟</span>' +
+						'	 			<input type="text" class="form-control filedelay" aria-describedby="basic-addon1" value="800" style="width:50px;">' +
+						'		  	  </div>' +
+						'            <div class="input-group input-group-sm">' +
+						'				<span class="input-group-addon file-remove-one"> <img src="/public/static/img/gif/new_del.png" title="删除此图片" width="15px"> </span>' +
+						'		      </div>' +
+						'         </div>' +
+						'       </div>' +
+						'     </div>' +
+						'   </div>' +
+						' </div>';
+					$('#file-drop-zone-clearfix').before(filehtml);
+					var filenum = $('.file-drop-zone').find('.file-preview-thumbnails').length;
+					if (filenum == 1) { //第一张图片初始化w h
+						$("<img/>").attr("src", blob[i]).load(function() {
+							gifwidth = this.width;
+							gifheight = this.height;
+							if (gifwidth > 500 || gifheight > 500) {
+								var r = confirm("图片过大是否按比例缩小图片？");
+								if (r == true) {
+									var offsetval = Math.max(gifwidth, gifheight) - 500;
+									gifwidth2 = gifwidth - (offsetval * (gifwidth / Math.max(gifwidth, gifheight)));
+									gifheight2 = gifheight - (offsetval * (gifheight / Math.max(gifwidth, gifheight)));
+									gifwidth = parseInt(gifwidth2);
+									gifheight = parseInt(gifheight2);
+									suoxiao = true;
+								} else {}
+							}
+
+							if (gifwidth > 1920 || gifheight > 1920) {
+								var offsetval = Math.max(gifwidth, gifheight) - 1920;
+								gifwidth2 = gifwidth - (offsetval * (gifwidth / Math.max(gifwidth, gifheight)));
+								gifheight2 = gifheight - (offsetval * (gifheight / Math.max(gifwidth, gifheight)));
+								gifwidth = parseInt(gifwidth2);
+								gifheight = parseInt(gifheight2);
+								suoxiao = true;
+							}
+
+							if (gifwidth < 2 || gifheight < 2) {
+								var offsetval = 2 - Math.min(gifwidth, gifheight);
+								gifwidth2 = gifwidth + (offsetval * (gifwidth / Math.min(gifwidth, gifheight)));
+								gifheight2 = gifheight + (offsetval * (gifheight / Math.min(gifwidth, gifheight)));
+								gifwidth = parseInt(gifwidth2);
+								gifheight = parseInt(gifheight2);
+								fangda = true;
+							}
+							$('#gifwidth').val(gifwidth);
+							$('#gifheight').val(gifheight);
+							gif_vheight = (gifheight / gifwidth) * gif_vwidth;
+							cheakfile();
+							addevent();
+						});
+					}
+				} else {
+					addimgerrorfilename = addimgerrorfilename + '<br>' + f.name;
+					cheakfile();
+					addevent();
+				}
+			}
+			//统计次数
+			$.ajax({
+				url: 'https://www.gif.cn/tools/visit_count',
+				type: 'POST',
+				dataType: 'json',
+				data: {name: 'index_image'},
+			})
+			.done(function() {
+				console.log("success");
+			})
+			if (addimgnum > 0) {
+				var errormsg = "";
+				if (addimgerrorfilename != "") {
+					errormsg = '<br><b>添加失败:</b>' + addimgerrorfilename;
+				}
+				alertMessage('成功添加<b>' + addimgnum + '</b>张图片。' + errormsg);
+			} else {
+				alertMessage('请选择正确的图片格式！');
+			}
+			document.getElementById('img-file').value = null;
+			cheakfile();
+			addevent();
+			return false;   
+		}
+	})
+
+	$('#video-file').change(function() {
+		console.log('video')
+		uploadtype = 'video'
+		var buffer = new ArrayBuffer(20);
+		var result = 'slice' in buffer;
+		result = result && canvasSupport();
+		//alert(result);
+		if (!result) {
+			alertMessage('您的浏览器不支持视频转GIF，请使用高级浏览器，如：chrome,火狐,百度浏览器,360浏览器等!');
+			return false;
+		}
+		var f = document.getElementById('video-file').files[0];
+		var filetype = imagetype(f.name);
+		if (f && filetype == "video") {
+			//统计次数
+			$.ajax({
+					url: 'https://www.gif.cn/tools/visit_count',
+					type: 'POST',
+					dataType: 'json',
+					data: {
+						name: 'index_video'
+					},
+				})
+				.done(function() {
+					console.log("success");
+				})
+			var blob = fileurl.createObjectURL(f);
+			var gifwidth = $('#gifwidth').val();
+			var gifheight = $('#gifheight').val();
+			var content = '<div align="center" style="padding:25px 0;">' +
+				'<video id="video2gif" controls style="max-width: 100%;height: 400px;"><source src="' + blob +
+				'" ></source></video>' +
+				'<div>当前共取得:<span id="video2gifframenum">0</span>帧,时间:<span id="video2giftime">0</span>ms <a onclick="removevideoimage()")>清空</a></div>' +
+				'<div><span id="video2gifinfo"></span></div>' +
+				'<br><button onclick="getvideoimage()" type="button" class="btn btn-primary" style="background-color: #6597fe;border-color: #6597fe;border-radius: 15px;width: 106px;height: 30px;padding:0;line-height:30px;text-align:center;margin-bottom:10px">开始取图</button> ' +
+				'<button onclick="stopvideoimage()" type="button" class="btn btn-danger" style="background-color: #f27767;border-color: #f27767;border-radius: 15px;width: 106px;height: 30px;padding:0;line-height:30px;text-align:center;margin-bottom:10px">停止取图</button> ' +
+				'<button onclick="addvideoimage()" type="button" class="btn btn-success" style="background-color: #50b949;border-color: #50b949;border-radius: 15px;width: 106px;height: 30px;padding:0;line-height:30px;text-align:center;margin-bottom:10px">取图完成</button><br>' +
+				'<div style="display:none;"><canvas width="' + gifwidth + '" height="' + gifheight +
+				'" id="videocanvas"></canvas></div>' +
+				'<div id="video2gifimage" style="display:none;"></div>' +
+				'</div>';
+
+			if ($(window).width() < 1366) {
+				layer.open({
+					type: 1, //page层
+					area: ['90%', '60%'],
+					title: '视频转GIF',
+					skin: 'layui-layer-lan', //墨绿风格,
+					closeBtn: 2,
+					shade: 0.6, //遮罩透明度
+					shift: -1, //0-6的动画形式，-1不开启
+					content: content
+				});
+			} else {
+				layer.open({
+					type: 1, //page层
+					area: ['80%', '80%'],
+					title: '视频转GIF',
+					skin: 'layui-layer-lan', //墨绿风格,
+					closeBtn: 2,
+					shade: 0.6, //遮罩透明度
+					shift: -1, //0-6的动画形式，-1不开启
+					content: content,
+				});
+			}
+		} else {
+			alertMessage('请添加有效的视频!');
+		}
+		document.getElementById('video-file').value = null;
+		cheakfile();
+		addevent();
+	});
+
+
+	$('#flash-file').change(function() {
+		uploadtype = 'flash';
+		var buffer = new ArrayBuffer(20);
+		var result = 'slice' in buffer;
+		result = result && canvasSupport();
+		if (!result) {
+			alertMessage('您的浏览器不支持FLASH转GIF，请使用高级浏览器，如：chrome,火狐,百度浏览器,360浏览器等!');
+			return false;
+		}
+		var f = document.getElementById('flash-file').files[0];
+		var filetype = imagetype(f.name);
+		if (f && filetype == "flash") {
+			//统计次数
+			$.ajax({
+					url: 'https://www.gif.cn/tools/visit_count',
+					type: 'POST',
+					dataType: 'json',
+					data: {
+						name: 'index_flash'
+					},
+				})
+				.done(function() {
+					console.log("success");
+				})
+			var blob = fileurl.createObjectURL(f);
+			var gifwidth = $('#gifwidth').val();
+			var gifheight = $('#gifheight').val();
+			var content = '<div align="center" style="padding:25px 0;">' +
+				'<s' + 'cript>shuobject.embedSWF("' + blob + '", "flashcanvas", ' + gifwidth + ', ' + gifheight +
+				', null,null,null);</' + 'script>' +
+				'<div id="flashcanvas">加载FLASH出错或是你的浏览器不支持</div>' +
+				'<div>当前共取得:<span id="flash2gifframenum">0</span>帧,时间:<span id="flash2giftime">0</span>ms <a onclick="removeflashimage()")>清空</a></div>' +
+				'<div><span id="flash2gifinfo"></span></div>' +
+				'<br><button onclick="getflashimage()" type="button" class="btn btn-primary" style="background-color: #6597fe;border-color: #6597fe;border-radius: 15px;width: 106px;height: 30px;padding:0;line-height:30px;text-align:center;">开始取图</button> ' +
+				'<button onclick="stopflashimage()" type="button" class="btn btn-danger" style="background-color: #f27767;border-color: #f27767;border-radius: 15px;width: 106px;height: 30px;padding:0;line-height:30px;text-align:center;">停止取图</button> ' +
+				'<button onclick="addflashimage()" type="button" class="btn btn-success" style="background-color: #50b949;border-color: #50b949;border-radius: 15px;width: 106px;height: 30px;padding:0;line-height:30px;text-align:center;">取图完成</button><br>' +
+				'<div id="flash2gifback" style="display:none;"></div>' +
+				'</div>';
+			if ($(window).width() < 760) {
+				layer.open({
+					type: 1, //page层
+					area: ['90%', '50%'],
+					title: 'FLASH转gif',
+					skin: 'layui-layer-lan', //墨绿风格
+					shade: 0.6, //遮罩透明度
+					shift: -1, //0-6的动画形式，-1不开启
+					content: content
+				});
+			} else {
+				layer.open({
+					type: 1, //page层
+					area: ['800px', '50%'],
+					title: 'FLASH转gif',
+					skin: 'layui-layer-lan', //墨绿风格
+					shade: 0.6, //遮罩透明度
+					shift: -1, //0-6的动画形式，-1不开启
+					content: content
+				});
+			}
+
+		} else {
+			alertMessage('请添加有效的flash!');
+		}
+		document.getElementById('flash-file').value = null;
+		cheakfile();
+		addevent();
+	});
+
+	$('#img-file').change(function() {
+		console.log('img')
+		uploadtype = 'image'
+		var result = canvasSupport();
+		if (!result) {
+			alertMessage('您的浏览器不支持，请使用高级浏览器，如：chrome,火狐,百度浏览器,360浏览器等!');
+			return false;
+		}
+		var gifwidth = $('#gifwidth').val();
+		var gifheight = $('#gifheight').val();
+		if (gifwidth && gifheight) {
+			if (gifwidth >= 2 && gifwidth <= 1920 && gifheight >= 2 && gifheight <= 1920) {
+				gif_vheight = (gifheight / gifwidth) * gif_vwidth;
+				gif_vheight = getMobileHeight(gif_vheight)
+			} else {
+				alertMessage('gif图片大小只能在2px至1920px之间');
+				$('#gifwidth').focus();
+				document.getElementById('img-file').value = null;
+				return false;
+			}
+		} else {
+			alertMessage('gif图片大小只能在2px至1920px之间');
+			$('#gifwidth').focus();
+			document.getElementById('img-file').value = null;
+			return false;
+		}
+		var fileList = document.getElementById('img-file').files;
+		var blob = new Array();
+		var addimgnum = 0;
+		var addimgerrorfilename = "";
+		for (var i = 0; i < fileList.length; i++) {
+			var f = fileList[i];
+			var filetype = imagetype(f.name);
+			if (f && (filetype == 'image' || filetype == 'gif')) {
+				addimgnum = addimgnum + 1;
+				blob[i] = fileurl.createObjectURL(fileList[i]);
+				var is_mobile = $('#is_mobile').val();
+				if (is_mobile == 1) { //手机端
+					content = '    <img class="file-preview-img" filetype="gif" filenum="' + i +
+						'" disposal="0" filedelay="800" src="' +
+						blob[i] + '" class="file-preview-image" title="' + f.name + '" alt="' + f.name + '" style="height:120px;">';
+				} else if (is_mobile == undefined) { //PC端
+
+
+					content = '    <img class="file-preview-img" filetype="gif" filenum="' + i +
+						'" disposal="0" filedelay="800" src="' +
+						blob[i] + '" class="file-preview-image" title="' + f.name + '" alt="' + f.name + '" style="height:' + gif_vheight +
+				'px;">';
+				$('.img_file_add_Btn').height(gif_vheight+40)
+				$(".file-preview-img").height(gif_vheight)
+				}
+				var filehtml = '<div class="file-preview-thumbnails">' +
+					'  <div class="file-preview-frame" data-fileindex="0">' +
+					content +
+					'    <div class="file-thumbnail-footer">' +
+					'      <div class="file-actions">' +
+					'        <div class="file-footer-buttons">' +
+					'            <div class="input-group input-group-sm">' +
+					'	 			<span class="input-group-addon">序号</span>' +
+					'    			<input type="text" class="form-control filenum" aria-describedby="basic-addon1" value="' + i +
+					'" style="width:50px;">' +
+					'				<span class="input-group-addon">延迟</span>' +
+					'	 			<input type="text" class="form-control filedelay" aria-describedby="basic-addon1" value="800" style="width:50px;">' +
+					'		  	  </div>' +
+					'            <div class="input-group input-group-sm">' +
+					'				<span class="input-group-addon file-remove-one"> <img src="/public/static/img/gif/new_del.png" title="删除此图片" width="15px"> </span>' +
+					'		      </div>' +
+					'         </div>' +
+					'       </div>' +
+					'     </div>' +
+					'   </div>' +
+					' </div>';
+				$('#file-drop-zone-clearfix').before(filehtml);
+				var filenum = $('.file-drop-zone').find('.file-preview-thumbnails').length;
+				if (filenum == 1) { //第一张图片初始化w h
+					$("<img/>").attr("src", blob[i]).load(function() {
+						gifwidth = this.width;
+						gifheight = this.height;
+						if (gifwidth > 500 || gifheight > 500) {
+							var r = confirm("图片过大是否按比例缩小图片？");
+							if (r == true) {
+								var offsetval = Math.max(gifwidth, gifheight) - 500;
+								gifwidth2 = gifwidth - (offsetval * (gifwidth / Math.max(gifwidth, gifheight)));
+								gifheight2 = gifheight - (offsetval * (gifheight / Math.max(gifwidth, gifheight)));
+								gifwidth = parseInt(gifwidth2);
+								gifheight = parseInt(gifheight2);
+								suoxiao = true;
+							} else {}
+						}
+
+						if (gifwidth > 1920 || gifheight > 1920) {
+							var offsetval = Math.max(gifwidth, gifheight) - 1920;
+							gifwidth2 = gifwidth - (offsetval * (gifwidth / Math.max(gifwidth, gifheight)));
+							gifheight2 = gifheight - (offsetval * (gifheight / Math.max(gifwidth, gifheight)));
+							gifwidth = parseInt(gifwidth2);
+							gifheight = parseInt(gifheight2);
+							suoxiao = true;
+						}
+
+						if (gifwidth < 2 || gifheight < 2) {
+							var offsetval = 2 - Math.min(gifwidth, gifheight);
+							gifwidth2 = gifwidth + (offsetval * (gifwidth / Math.min(gifwidth, gifheight)));
+							gifheight2 = gifheight + (offsetval * (gifheight / Math.min(gifwidth, gifheight)));
+							gifwidth = parseInt(gifwidth2);
+							gifheight = parseInt(gifheight2);
+							fangda = true;
+						}
+						$('#gifwidth').val(gifwidth);
+						$('#gifheight').val(gifheight);
+						gif_vheight = (gifheight / gifwidth) * gif_vwidth;
+						cheakfile();
+						addevent();
+					});
+				}
+			} else {
+				addimgerrorfilename = addimgerrorfilename + '<br>' + f.name;
+				cheakfile();
+				addevent();
+			}
+		}
+		//统计次数
+		$.ajax({
+			url: 'https://www.gif.cn/tools/visit_count',
+			type: 'POST',
+			dataType: 'json',
+			data: {name: 'index_image'},
+		})
+		.done(function() {
+			console.log("success");
+		})
+		if (addimgnum > 0) {
+			var errormsg = "";
+			if (addimgerrorfilename != "") {
+				errormsg = '<br><b>添加失败:</b>' + addimgerrorfilename;
+			}
+			alertMessage('成功添加<b>' + addimgnum + '</b>张图片。' + errormsg);
+		} else {
+			alertMessage('请选择正确的图片格式！');
+		}
+		document.getElementById('img-file').value = null;
+		cheakfile();
+		addevent();
+	});
+
+	shared = getCookie('shared');
+	if (shared == '') {
+		shared = '0';
+	}
+
+	$('.bdsharebuttonbox').click(function() {
+		shared = true;
+		addCookie('shared', '1', 24 * 30);
+	});
+
+	//$('#giftext').bind("change", function() {
+	//	if (shared == "0") {
+	//		alertMessage('请先登录本站！登录后可以修改图片文字！');
+	//		$('#giftext').val('gif.cn');
+	//		$('.bdshare').Shake(2, 10);
+	//	}
+	//});
+
+	$('#mobilemakegif').click(function() {
+		$('#mobiletips').hide();
+		$('#makegifdivarea').removeClass("visible-lg");
+		$('#gifsshow').remove();
+	});
+
+	$('#closemobiletips').click(function() {
+		$('#mobiletips').html("");
+	});
+
+	$('#gkblsd').click(function() {
+		if (bilisd == true) {
+			$('#gkblsd').attr('src', './images/brk.png');
+			$('#gkblsd').attr('title', '高宽自定义');
+			$('#gkblsd').attr('alt', '高宽自定义');
+			bilisd = false;
+		} else {
+			$('#gkblsd').attr('src', './images/link.png');
+			$('#gkblsd').attr('title', '锁定高宽比例');
+			$('#gkblsd').attr('alt', '锁定高宽比例');
+			bilisd = true;
+		}
+	});
+});
+
+jQuery.fn.Shake = function(shakenum, shakeDistance) {
+	this.each(function() {
+		var jSelf = $(this);
+		jSelf.css({
+			position: 'relative'
+		});
+		for (var x = 1; x <= shakenum; x++) {
+			jSelf.animate({
+					left: (-shakeDistance)
+				}, 50)
+				.animate({
+					left: shakeDistance
+				}, 50)
+				.animate({
+					left: 0
+				}, 50);
+		}
+	});
+	return this;
+}
+
+function addCookie(name, value, expiresHours) {
+	var cookieString = name + "=" + escape(value);
+	//判断是否设置过期时间
+	if (expiresHours > 0) {
+		var date = new Date();
+		date.setTime(date.getTime + expiresHours * 3600 * 1000);
+		cookieString = cookieString + "; expires=" + date.toGMTString();
+	}
+	document.cookie = cookieString;
+}
+
+function getCookie(name) {
+	var strCookie = document.cookie;
+	var arrCookie = strCookie.split("; ");
+	for (var i = 0; i < arrCookie.length; i++) {
+		var arr = arrCookie[i].split("=");
+		if (arr[0] == name) return arr[1];
+	}
+	return "";
+}
+
+$(document).on('click', '.help_txt', function() {
+	if ($(window).width() < 760) {
+		layer.open({
+			// skin:'help',
+			title: '使用帮助',
+			type: 1, //page层
+			area: ['85%', '65%'],
+			skin: 'layui-layer-lant', //墨绿风格
+			closeBtn: 2,
+			shade: 0.6, //遮罩透明度
+			shift: -1, //0-6的动画形式，-1不开启
+			content: $("#showbox")
+		})
+	} else {
+		layer.open({
+			// skin:'help',
+			title: '使用帮助',
+			type: 1, //page层
+			area: ['1000px', '700px'],
+			skin: 'layui-layer-lant', //墨绿风格
+			closeBtn: 2,
+			shade: 0.6, //遮罩透明度
+			shift: -1, //0-6的动画形式，-1不开启
+			content: $("#showbox")
+		})
+	}
+})
+$(document).on('click', '#vippd', function() {
+	$.ajax({
+        url: '/index/toolstatus',
+        type: 'POST',
+        dataType: 'json',
+        async:false,
+        data: {param1: 'value1'},
+    })
+    .done(function(res) {
+        
+        type = res.type
+        user_product_id = res.user_product_id
+        sycs = res.sycx
+        
+    })
+			
+	url = $(this).attr('url');
+	if (type == 1) {
+			tjcs()
+			var link = document.createElement('a');
+			link.setAttribute("download", 'gif');
+			link.href = url;
+			link.click();
+		
+	} else {
+		if(type == 7 || type == 8){
+			
+			tjcs()
+			var link = document.createElement('a');
+			link.setAttribute("download", 'gif');
+			link.href = url;
+			link.click();
+			
+		}
+				
+	}
+
+})
+function tjcs() {
+	if(uploadtype == 'video'){
+        $.ajax({
+            url: '/tools/cjcount',
+            type: 'POST',
+            dataType: 'json',
+            data: {type: 'new_index_video'},
+        })
+        $.ajax({
+        	url: '/index/keywordcs',
+        	type: 'GET',
+        	dataType: 'json',
+        	data: {type: 2},
+        })
+        .done(function() {
+        	console.log("success");
+        })
+    }else if(uploadtype == 'image'){
+        $.ajax({
+            url: '/tools/cjcount',
+            type: 'POST',
+            dataType: 'json',
+            data: {type: 'index_gifhecheng'},
+        })
+        $.ajax({
+        	url: '/index/keywordcs',
+        	type: 'GET',
+        	dataType: 'json',
+        	data: {type: 1},
+        })
+        .done(function() {
+        	console.log("success");
+        })
+    }else if(uploadtype == 'falsh'){
+        $.ajax({
+            url: '/tools/cjcount',
+            type: 'POST',
+            dataType: 'json',
+            data: {type: 'index_falsh'},
+        })
+    }  
+}
+$(document).on('click', '#sjhy', function() {
+	pay()
+	
+});
+$(document).on('click','#cstj',function(){
+	if(uploadtype == 'video'){
+        $.ajax({
+            url: '/tools/cjcount',
+            type: 'POST',
+            dataType: 'json',
+            data: {type: 'new_index_video'},
+        })
+        $.ajax({
+        	url: '/index/keywordcs',
+        	type: 'GET',
+        	dataType: 'json',
+        	data: {type: 2},
+        })
+        .done(function() {
+        	console.log("success");
+        })
+    }else if(uploadtype == 'image'){
+        $.ajax({
+            url: '/tools/cjcount',
+            type: 'POST',
+            dataType: 'json',
+            data: {type: 'index_gifhecheng'},
+        })
+        $.ajax({
+        	url: '/index/keywordcs',
+        	type: 'GET',
+        	dataType: 'json',
+        	data: {type: 1},
+        })
+        .done(function() {
+        	console.log("success");
+        })
+        
+        
+    }else if(uploadtype == 'falsh'){
+        $.ajax({
+            url: '/tools/cjcount',
+            type: 'POST',
+            dataType: 'json',
+            data: {type: 'index_falsh'},
+        })
+    }  
+    $(this).attr('id','');
+    
+    
+});
+
+function pay() {
+	ordertype = '';
+	if(uploadtype == 'video'){
+		ordertype = 'index_video'
+	}else if (uploadtype == 'image') {
+		ordertype = 'index_image'
+	}
+	parent.layer.open({
+        type: 2,
+        title:false,
+        closeBtn: 0,
+        area:['913px','492px'],
+        content: ['/pay/userpay?vip_id=4&ordertype='+ordertype,'no'],
+    });
+}

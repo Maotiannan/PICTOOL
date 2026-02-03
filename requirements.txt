@@ -1,0 +1,9 @@
+# 图片处理工具套件依赖包
+# Pillow - 图像处理核心库
+Pillow>=9.0.0
+
+# img2pdf - PDF转换库
+img2pdf>=0.4.0
+
+# psutil - 系统信息获取（可选）
+psutil>=5.8.0
