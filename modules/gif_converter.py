@@ -13,13 +13,14 @@ import queue
 import logging
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
-from PIL import Image, ImageTk, ImageDraw
+from PIL import Image, ImageTk
 from typing import List, Optional, Callable, Dict, Any
 
 from utils import (
-    get_image_files, is_image_file, format_file_size,
-    create_output_folder, safe_filename, handle_exception
+    get_image_files, format_file_size,
+    create_output_folder, handle_exception
 )
+from core.gif import GifOptions, build_gif_frame, create_gif
 
 class SimpleGifEncoder:
     """简化的GIF编码器，基于原始项目的编码逻辑"""
@@ -396,6 +397,17 @@ class GifConverter:
         else:
             self.file_count_label.config(text="找到 0 个图片文件")
 
+    def get_gif_options(self):
+        """Build core GIF options from UI state."""
+        return GifOptions(
+            width=self.width_var.get(),
+            height=self.height_var.get(),
+            delay=self.delay_var.get(),
+            repeat=self.repeat_var.get(),
+            quality=self.quality_var.get(),
+            keep_ratio=self.keep_ratio_var.get(),
+        )
+
     @handle_exception
     def preview_first_frame(self):
         """预览第一帧（调整后的大小）"""
@@ -404,20 +416,8 @@ class GifConverter:
             return
 
         try:
-            # 加载第一张图片
             image_path = self.image_files[0]
-            image = Image.open(image_path)
-
-            # 调整到目标尺寸
-            width = self.width_var.get()
-            height = self.height_var.get()
-
-            if self.keep_ratio_var.get():
-                # 保持宽高比
-                image.thumbnail((width, height), Image.Resampling.LANCZOS)
-            else:
-                # 强制调整尺寸
-                image = image.resize((width, height), Image.Resampling.LANCZOS)
+            image = build_gif_frame(image_path, self.get_gif_options()).convert("RGB")
 
             # 显示预览窗口
             self.show_preview_window(image, os.path.basename(image_path))
@@ -481,93 +481,38 @@ class GifConverter:
             output_filename = f"animated_gif_{timestamp}.gif"
             output_path = os.path.join(output_folder, output_filename)
 
-            # 获取参数
-            width = self.width_var.get()
-            height = self.height_var.get()
-            delay = self.delay_var.get()
-            repeat = self.repeat_var.get()
-            quality = self.quality_var.get()
-            keep_ratio = self.keep_ratio_var.get()
+            options = self.get_gif_options()
 
             self.message_queue.put({
                 'type': 'status',
                 'data': "开始生成GIF..."
             })
 
-            # Check available memory
-            import psutil
-            mem = psutil.virtual_memory()
-            if mem.available < 100 * 1024 * 1024:  # Less than 100MB
-                 raise MemoryError("内存不足，无法继续处理")
-
-            # 创建GIF编码器
-            encoder = SimpleGifEncoder()
-            encoder.setSize(width, height)
-            encoder.setDelay(delay)
-            encoder.setRepeat(repeat)
-            encoder.setQuality(quality)
-
-            # 处理每一张图片
-            total_images = len(self.image_files)
-            for i, image_path in enumerate(self.image_files):
-                if self.stop_requested:
-                    break
-
-                # Check memory periodically
-                if i % 5 == 0:
-                    if psutil.virtual_memory().available < 50 * 1024 * 1024:
-                        raise MemoryError("内存不足，处理被终止")
-
-                # 更新进度
-                progress = (i + 1) / total_images * 100
+            def report_progress(index, total, image_path):
                 self.message_queue.put({
                     'type': 'progress',
-                    'data': progress
+                    'data': index / total * 100
                 })
-
                 self.message_queue.put({
                     'type': 'status',
-                    'data': f"处理图片 {i+1}/{total_images}: {os.path.basename(image_path)}"
+                    'data': f"处理图片 {index}/{total}: {os.path.basename(image_path)}"
                 })
 
-                # 加载图片
-                try:
-                    image = Image.open(image_path)
+            result = create_gif(
+                self.image_files,
+                output_path,
+                options,
+                progress=report_progress,
+                cancelled=lambda: self.stop_requested,
+                logger=self.logger,
+            )
 
-                    # 调整尺寸
-                    if keep_ratio:
-                        # 保持宽高比
-                        image.thumbnail((width, height), Image.Resampling.LANCZOS)
-                        # 创建目标尺寸的画布
-                        canvas = Image.new('RGB', (width, height), (255, 255, 255))
-                        # 居中放置图片
-                        x = (width - image.width) // 2
-                        y = (height - image.height) // 2
-                        canvas.paste(image, (x, y))
-                        image = canvas
-                    else:
-                        # 强制调整尺寸
-                        image = image.resize((width, height), Image.Resampling.LANCZOS)
-
-                    # 添加到编码器
-                    encoder.addFrame(image)
-
-                except Exception as e:
-                    self.logger.error(f"处理图片失败 {image_path}: {e}")
-
-            if self.stop_requested:
+            if result.cancelled:
                 self.message_queue.put({
                     'type': 'status',
                     'data': "生成已取消"
                 })
             else:
-                # 生成GIF
-                gif_data = encoder.encode()
-
-                # 保存文件
-                with open(output_path, 'wb') as f:
-                    f.write(gif_data)
-
                 # 完成
                 self.message_queue.put({
                     'type': 'status',

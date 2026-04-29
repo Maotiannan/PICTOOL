@@ -7,19 +7,23 @@
 
 import os
 import sys
-import time
 import threading
 import queue
 import logging
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog, colorchooser
-from PIL import Image, ImageTk, ImageDraw, ImageFont, ImageOps, ExifTags, ImageStat
+from PIL import Image, ImageTk, ImageFont, ImageOps
 from typing import List, Optional, Callable, Dict, Any, Tuple
 
 from utils import (
-    get_image_files, is_image_file, format_file_size,
-    create_output_folder, safe_filename, handle_exception,
-    get_exif_datetime, is_chinese_char, contains_chinese
+    get_image_files, format_file_size,
+    create_output_folder, handle_exception,
+)
+from core.watermark import (
+    WatermarkOptions,
+    WatermarkRenderer,
+    process_watermark_file,
+    save_watermarked_image,
 )
 
 class WatermarkTool:
@@ -472,15 +476,10 @@ class WatermarkTool:
     def show_watermark_preview(self, image_path):
         """显示水印预览窗口"""
         try:
-            # 加载图片
-            image = Image.open(image_path)
-            image = ImageOps.exif_transpose(image)
-
-            # 处理水印文本
-            text = self.process_dynamic_text(self.watermark_text.get(), image)
-
-            # 创建水印
-            watermarked = self.add_watermark_to_image(image, text)
+            renderer = WatermarkRenderer(self.get_watermark_options())
+            with Image.open(image_path) as image:
+                image = ImageOps.exif_transpose(image)
+                watermarked = renderer.add_watermark(image)
 
             # 显示预览窗口
             self.show_preview_window(watermarked, os.path.basename(image_path))
@@ -489,142 +488,43 @@ class WatermarkTool:
             self.logger.error(f"创建预览失败: {e}")
             raise
 
+    def get_watermark_options(self, text=None):
+        """Build core watermark options from UI state."""
+        return WatermarkOptions(
+            text=self.watermark_text.get() if text is None else text,
+            font_size=self.font_size.get(),
+            opacity=self.opacity.get(),
+            color=tuple(self.watermark_color),
+            position=self.position_var.get(),
+            multi_size=self.multi_size_var.get(),
+            high_contrast=self.high_contrast_var.get(),
+            chinese_font=self.font_chinese,
+            english_font=self.font_english,
+        )
+
     def process_dynamic_text(self, text, image):
         """处理动态文本占位符"""
-        if "{exif_date}" in text:
-            exif_date = get_exif_datetime(image)
-            replace_text = exif_date if exif_date else "N/A"
-            text = text.replace("{exif_date}", replace_text)
-        return text
+        return WatermarkRenderer(self.get_watermark_options()).process_dynamic_text(text, image)
 
     def add_watermark_to_image(self, image, text):
         """为图片添加水印"""
-        # 转换为RGBA
-        if image.mode != 'RGBA':
-            image = image.convert('RGBA')
-
-        # 创建水印层
-        watermark = Image.new('RGBA', image.size, (0, 0, 0, 0))
-        draw = ImageDraw.Draw(watermark)
-
-        # 计算字体大小
-        if self.multi_size_var.get():
-            font_size = self.calculate_adaptive_font_size(text, image.size)
-        else:
-            font_size = self.font_size.get()
-
-        # 获取字体
-        font = self.get_font(text, font_size)
-
-        # 计算文本尺寸
-        bbox = draw.textbbox((0, 0), text, font=font)
-        text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
-
-        # 计算位置
-        x, y = self.calculate_position(image.size, (text_width, text_height))
-
-        # 确定颜色
-        color = self.watermark_color
-        if self.high_contrast_var.get():
-            color = self.calculate_contrast_color_for_region(image, x, y, text_width, text_height)
-
-        # 绘制水印
-        opacity_value = int(self.opacity.get() * 255 / 100)
-        fill_color = (*color, opacity_value)
-
-        draw.text((x, y), text, font=font, fill=fill_color)
-
-        # 合成图片
-        result = Image.alpha_composite(image, watermark)
-        return result
+        return WatermarkRenderer(self.get_watermark_options()).add_watermark(image, text)
 
     def calculate_adaptive_font_size(self, text, image_size):
         """计算自适应字体大小"""
-        img_w, img_h = image_size
-        base_size = self.font_size.get()
-
-        # 目标宽度为图片宽度的80%
-        target_width = img_w * 0.8
-        min_size = max(10, int(min(img_w, img_h) * 0.02))
-        max_size = int(min(img_w, img_h) * 0.3)
-
-        # 二分查找最佳字体大小
-        best_size = min_size
-        low, high = min_size, max_size
-
-        # Create a single temporary image and draw object for measurement
-        temp_img = Image.new('RGB', (1, 1))
-        temp_draw = ImageDraw.Draw(temp_img)
-
-        for _ in range(10):  # 最多迭代10次
-            if low > high:
-                break
-
-            mid = (low + high) // 2
-            font = self.get_font(text, mid)
-
-            bbox = temp_draw.textbbox((0, 0), text, font=font)
-            text_width = bbox[2] - bbox[0]
-
-            if text_width <= target_width:
-                best_size = mid
-                low = mid + 1
-            else:
-                high = mid - 1
-
-        return max(min_size, min(best_size, max_size))
+        return WatermarkRenderer(self.get_watermark_options()).calculate_adaptive_font_size(text, image_size)
 
     def get_font(self, text, size):
         """获取合适的字体"""
-        try:
-            if contains_chinese(text):
-                return ImageFont.truetype(self.font_chinese, max(1, size))
-            else:
-                return ImageFont.truetype(self.font_english, max(1, size))
-        except:
-            return ImageFont.load_default()
+        return WatermarkRenderer(self.get_watermark_options()).get_font(text, size)
 
     def calculate_position(self, image_size, text_size):
         """计算水印位置"""
-        img_w, img_h = image_size
-        text_w, text_h = text_size
-        margin = 10
-
-        position = self.position_var.get()
-        if position == "左上角":
-            return margin, margin
-        elif position == "右上角":
-            return img_w - text_w - margin, margin
-        elif position == "左下角":
-            return margin, img_h - text_h - margin
-        elif position == "右下角":
-            return img_w - text_w - margin, img_h - text_h - margin
-        elif position == "中心":
-            return (img_w - text_w) // 2, (img_h - text_h) // 2
-        else:
-            return margin, margin
+        return WatermarkRenderer(self.get_watermark_options()).calculate_position(image_size, text_size)
 
     def calculate_contrast_color_for_region(self, image, x, y, width, height):
         """计算区域对比色"""
-        try:
-            # 裁剪区域
-            region = image.crop((x, y, x + width, y + height))
-            # 转换为RGB计算平均颜色
-            if region.mode != 'RGB':
-                region = region.convert('RGB')
-
-            stat = ImageStat.Stat(region)
-            mean = stat.mean
-
-            # 计算亮度
-            luminance = 0.299 * mean[0] + 0.587 * mean[1] + 0.114 * mean[2]
-
-            # 返回对比色
-            return (0, 0, 0) if luminance > 128 else (255, 255, 255)
-
-        except Exception:
-            return self.watermark_color
+        return WatermarkRenderer(self.get_watermark_options()).calculate_contrast_color_for_region(image, x, y, width, height)
 
     def show_preview_window(self, image, title):
         """显示预览窗口"""
@@ -686,6 +586,7 @@ class WatermarkTool:
                 'type': 'status',
                 'data': "开始批量添加水印..."
             })
+            renderer = WatermarkRenderer(self.get_watermark_options(text=text))
 
             for i, image_path in enumerate(self.image_files):
                 if self.stop_requested:
@@ -705,19 +606,7 @@ class WatermarkTool:
                 })
 
                 try:
-                    # 处理图片
-                    image = Image.open(image_path)
-                    image = ImageOps.exif_transpose(image)
-
-                    # 处理动态文本
-                    processed_text = self.process_dynamic_text(text, image)
-
-                    # 添加水印
-                    watermarked = self.add_watermark_to_image(image, processed_text)
-
-                    # 保存文件
-                    output_path = os.path.join(output_folder, filename)
-                    self.save_image(watermarked, output_path, image.format)
+                    process_watermark_file(image_path, output_folder, renderer)
 
                     processed_count += 1
 
@@ -764,32 +653,7 @@ class WatermarkTool:
     def save_image(self, image, output_path, original_format):
         """保存图片"""
         try:
-            # Prepare format
-            save_format = original_format if original_format else 'PNG'
-            
-            # Handle JPEG specifics
-            if save_format.upper() in ('JPEG', 'JPG'):
-                # JPEG supports no alpha, convert to RGB if needed
-                if image.mode == 'RGBA':
-                    background = Image.new('RGB', image.size, (255, 255, 255))
-                    background.paste(image, mask=image.split()[-1])
-                    image = background
-                image.save(output_path, 'JPEG', quality=95)
-            
-            # Handle other formats
-            elif save_format.upper() == 'PNG':
-                image.save(output_path, 'PNG')
-            elif save_format.upper() == 'WEBP':
-                image.save(output_path, 'WEBP')
-            else:
-                # Fallback for unknown formats, try to save as is or default to PNG if it fails
-                try:
-                    image.save(output_path, save_format)
-                except:
-                    # If saving with original format fails (e.g. BMP with alpha), fall back to PNG
-                    if not output_path.lower().endswith('.png'):
-                        output_path = os.path.splitext(output_path)[0] + '.png'
-                    image.save(output_path, 'PNG')
+            save_watermarked_image(image, output_path, original_format)
 
         except Exception as e:
             self.logger.error(f"保存图片失败 {output_path}: {e}")

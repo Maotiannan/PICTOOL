@@ -81,6 +81,62 @@ def test_gui():
         print(f"[ERROR] GUI测试失败: {e}")
         return False
 
+def test_core_processing():
+    """Smoke test core watermark and GIF processing."""
+    print("\n测试核心图片处理...")
+    try:
+        from tempfile import TemporaryDirectory
+
+        from PIL import Image
+
+        from core.gif import GifOptions, create_gif
+        from core.watermark import WatermarkOptions, WatermarkRenderer, process_watermark_file
+
+        with TemporaryDirectory() as tmp_dir:
+            tmp = Path(tmp_dir)
+            src_dir = tmp / "src"
+            watermark_dir = tmp / "watermark"
+            gif_path = tmp / "gif" / "demo.gif"
+            src_dir.mkdir()
+            watermark_dir.mkdir()
+
+            image_paths = []
+            for index, color in enumerate([(240, 240, 240), (20, 90, 160)], start=1):
+                image_path = src_dir / f"{index:02d}.jpg"
+                Image.new("RGB", (160, 120), color).save(image_path, "JPEG")
+                image_paths.append(str(image_path))
+
+            renderer = WatermarkRenderer(
+                WatermarkOptions(
+                    text="demo {exif_date}",
+                    font_size=18,
+                    opacity=70,
+                    position="中心",
+                )
+            )
+            watermarked_path = process_watermark_file(image_paths[0], str(watermark_dir), renderer)
+            with Image.open(watermarked_path) as watermarked:
+                if watermarked.size != (160, 120):
+                    print(f"[ERROR] 水印输出尺寸错误: {watermarked.size}")
+                    return False
+
+            result = create_gif(
+                image_paths,
+                str(gif_path),
+                GifOptions(width=80, height=60, delay=120, keep_ratio=True),
+            )
+            with Image.open(result.output_path) as gif:
+                if gif.size != (80, 60) or getattr(gif, "n_frames", 1) != 2:
+                    print("[ERROR] GIF输出尺寸或帧数错误")
+                    return False
+
+        print("[OK] 核心图片处理测试成功")
+        return True
+    except Exception as e:
+        print(f"[ERROR] 核心图片处理测试失败: {e}")
+        traceback.print_exc()
+        return False
+
 def test_file_structure():
     """测试文件结构"""
     print("\n测试文件结构...")
@@ -126,7 +182,8 @@ def main():
         ("文件结构", test_file_structure),
         ("模块导入", test_imports),
         ("依赖库", test_dependencies),
-        ("GUI组件", test_gui)
+        ("GUI组件", test_gui),
+        ("核心图片处理", test_core_processing)
     ]
 
     passed = 0
